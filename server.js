@@ -2,24 +2,38 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const path = require('path');
-const fs = require('fs');
+const { Client } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const APP_PASSWORD = process.env.APP_PASSWORD || 'marino2026';
 const SECRET = process.env.SESSION_SECRET || 'em-marino-secret-2026';
 
-// — storage JSON su file —
-const dataDir = path.join(__dirname, 'data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+// — PostgreSQL —
+const db = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+db.connect().then(() => {
+  return db.query(`
+    CREATE TABLE IF NOT EXISTS store (
+      collection TEXT NOT NULL,
+      key TEXT NOT NULL,
+      data JSONB NOT NULL,
+      saved_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (collection, key)
+    )
+  `);
+}).then(() => console.log('DB connesso')).catch(err => console.error('DB error:', err));
 
-function readDB(name) {
-  const f = path.join(dataDir, name + '.json');
-  if (!fs.existsSync(f)) return {};
-  try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return {}; }
+async function readDB(collection) {
+  const res = await db.query('SELECT key, data FROM store WHERE collection=$1', [collection]);
+  const result = {};
+  res.rows.forEach(r => { result[r.key] = r.data; });
+  return result;
 }
-function writeDB(name, data) {
-  fs.writeFileSync(path.join(dataDir, name + '.json'), JSON.stringify(data), 'utf8');
+async function writeOne(collection, key, data) {
+  await db.query('INSERT INTO store (collection,key,data,saved_at) VALUES ($1,$2,$3,NOW()) ON CONFLICT (collection,key) DO UPDATE SET data=$3, saved_at=NOW()', [collection, key, data]);
+}
+async function deleteOne(collection, key) {
+  await db.query('DELETE FROM store WHERE collection=$1 AND key=$2', [collection, key]);
 }
 
 // — middleware —
@@ -47,52 +61,37 @@ app.get('/api/me', (req, res) => {
 });
 
 // — CERTIFICATI —
-app.get('/api/certs', requireAuth, (req, res) => res.json(readDB('certs')));
-app.put('/api/certs/:key', requireAuth, (req, res) => {
-  const db = readDB('certs');
-  db[req.params.key] = { ...req.body, savedAt: new Date().toLocaleString('it-IT') };
-  writeDB('certs', db); res.json({ ok: true });
-});
-app.delete('/api/certs/:key', requireAuth, (req, res) => {
-  const db = readDB('certs'); delete db[req.params.key];
-  writeDB('certs', db); res.json({ ok: true });
-});
+app.get('/api/certs', requireAuth, async (req, res) => { try { res.json(await readDB('certs')); } catch(e) { res.status(500).json({error:e.message}); } });
+app.put('/api/certs/:key', requireAuth, async (req, res) => { try { await writeOne('certs', req.params.key, {...req.body, savedAt: new Date().toLocaleString('it-IT')}); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
+app.delete('/api/certs/:key', requireAuth, async (req, res) => { try { await deleteOne('certs', req.params.key); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 
 // — REGISTRO —
-app.get('/api/registro', requireAuth, (req, res) => res.json(readDB('registro')));
-app.put('/api/registro/:key', requireAuth, (req, res) => {
-  const db = readDB('registro'); db[req.params.key] = req.body;
-  writeDB('registro', db); res.json({ ok: true });
-});
-app.delete('/api/registro/:key', requireAuth, (req, res) => {
-  const db = readDB('registro'); delete db[req.params.key];
-  writeDB('registro', db); res.json({ ok: true });
-});
+app.get('/api/registro', requireAuth, async (req, res) => { try { res.json(await readDB('registro')); } catch(e) { res.status(500).json({error:e.message}); } });
+app.put('/api/registro/:key', requireAuth, async (req, res) => { try { await writeOne('registro', req.params.key, req.body); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
+app.delete('/api/registro/:key', requireAuth, async (req, res) => { try { await deleteOne('registro', req.params.key); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 
 // — CLIENTI —
-app.get('/api/clients', requireAuth, (req, res) => res.json(readDB('clients')));
-app.put('/api/clients/:key', requireAuth, (req, res) => {
-  const db = readDB('clients'); db[req.params.key] = req.body;
-  writeDB('clients', db); res.json({ ok: true });
-});
-app.delete('/api/clients/:key', requireAuth, (req, res) => {
-  const db = readDB('clients'); delete db[req.params.key];
-  writeDB('clients', db); res.json({ ok: true });
-});
+app.get('/api/clients', requireAuth, async (req, res) => { try { res.json(await readDB('clients')); } catch(e) { res.status(500).json({error:e.message}); } });
+app.put('/api/clients/:key', requireAuth, async (req, res) => { try { await writeOne('clients', req.params.key, req.body); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
+app.delete('/api/clients/:key', requireAuth, async (req, res) => { try { await deleteOne('clients', req.params.key); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 
 // — BACKUP —
-app.get('/api/backup', requireAuth, (req, res) => {
-  res.setHeader('Content-Disposition', `attachment; filename="backup_marino_${new Date().toISOString().slice(0,10)}.json"`);
-  res.json({ em_certs: readDB('certs'), em_registro: readDB('registro'), em_clients: readDB('clients'), exportedAt: new Date().toLocaleString('it-IT') });
+app.get('/api/backup', requireAuth, async (req, res) => {
+  try {
+    res.setHeader('Content-Disposition', `attachment; filename="backup_marino_${new Date().toISOString().slice(0,10)}.json"`);
+    res.json({ em_certs: await readDB('certs'), em_registro: await readDB('registro'), em_clients: await readDB('clients'), exportedAt: new Date().toLocaleString('it-IT') });
+  } catch(e) { res.status(500).json({error:e.message}); }
 });
 
 // — IMPORT —
-app.post('/api/import', requireAuth, (req, res) => {
-  const { em_certs, em_registro, em_clients } = req.body;
-  if (em_certs)    writeDB('certs',    { ...readDB('certs'),    ...em_certs });
-  if (em_registro) writeDB('registro', { ...readDB('registro'), ...em_registro });
-  if (em_clients)  writeDB('clients',  { ...readDB('clients'),  ...em_clients });
-  res.json({ ok: true });
+app.post('/api/import', requireAuth, async (req, res) => {
+  try {
+    const { em_certs, em_registro, em_clients } = req.body;
+    if (em_certs)    for (const [k,v] of Object.entries(em_certs))    await writeOne('certs', k, v);
+    if (em_registro) for (const [k,v] of Object.entries(em_registro)) await writeOne('registro', k, v);
+    if (em_clients)  for (const [k,v] of Object.entries(em_clients))  await writeOne('clients', k, v);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({error:e.message}); }
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
