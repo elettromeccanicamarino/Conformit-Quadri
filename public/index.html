@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certificato Conformità Quadri - Elettromeccanica Marino</title>
+  <style>
+    :root{--primary:#1a237e;--primary-light:#3949ab;--accent:#ffd600;--bg:#f0f2f5;--card-bg:#fff;--text:#212121;--text-light:#666;--border:#ddd;--success:#2e7d32;--danger:#c62828;}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:var(--bg);color:var(--text)}
+
+    /* LOGIN */
+    .login-screen{display:none;position:fixed;inset:0;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);z-index:99999;align-items:center;justify-content:center;}
+    .login-screen.show{display:flex}
+    .login-box{background:#fff;border-radius:18px;padding:40px 44px;width:min(380px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;}
+    .login-logo{width:80px;height:80px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:var(--primary);margin:0 auto 20px;}
+    .login-box h2{color:var(--primary);font-size:22px;margin-bottom:6px;}
+    .login-box p{color:var(--text-light);font-size:13px;margin-bottom:28px;}
+    .login-box input{width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:10px;font-size:16px;font-family:inherit;margin-bottom:14px;transition:border-color .3s;}
+    .login-box input:focus{outline:none;border-color:var(--primary);}
+    .login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;transition:transform .2s;}
+    .login-btn:hover{transform:translateY(-2px)}
+    .login-error{color:var(--danger);font-size:13px;margin-top:10px;min-height:20px;}
+
+    .app-header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);color:#fff;padding:20px 30px;display:flex;align-items:center;gap:20px;box-shadow:0 4px 12px rgba(0,0,0,.3);position:sticky;top:0;z-index:1000;}
+    .app-header .logo-circle{width:60px;height:60px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--primary);flex-shrink:0;}
+    .app-header h1{font-size:22px}.app-header p{font-size:13px;opacity:.85}
+    .app-header .logout-btn{margin-left:auto;padding:8px 18px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;}
+    .app-header .logout-btn:hover{background:rgba(255,255,255,.25)}
+    .form-container{max-width:1100px;margin:30px auto;padding:0 20px}
+    .form-section{background:var(--card-bg);border-radius:12px;padding:25px 30px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.08);border-left:4px solid var(--primary);}
+    .form-section h2{font-size:18px;color:var(--primary);margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+    .form-section h2 .icon{width:32px;height:32px;background:var(--primary);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+    .form-group{display:flex;flex-direction:column;position:relative}
+    .form-group label{font-size:13px;font-weight:600;color:var(--text-light);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+    .form-group input,.form-group select,.form-group textarea{padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;transition:border-color .3s;background:#fafafa;}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);background:#fff;}
+    .form-group textarea{resize:vertical;min-height:60px}
+    .form-group.full-width{grid-column:1/-1}
+    .field-hint{font-size:11px;color:#999;margin-top:4px;font-style:italic}
+    .mat-row{display:flex;align-items:flex-end;gap:10px;}.mat-row input{flex:1;font-weight:700;}
+    .progr-badge{background:var(--primary);color:#fff;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+    .progr-badge .pnum{color:var(--accent);font-size:15px;}
+    .autocomplete-list{position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid var(--primary);border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;z-index:500;display:none;box-shadow:0 8px 20px rgba(0,0,0,.15);}
+    .autocomplete-list.show{display:block}
+    .autocomplete-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid #eee;transition:background .15s}
+    .autocomplete-item:hover,.autocomplete-item.selected{background:#e8eaf6}
+    .autocomplete-item .ac-name{font-weight:700;font-size:14px;color:var(--primary)}
+    .autocomplete-item .ac-detail{font-size:12px;color:var(--text-light);margin-top:2px}
+    .autocomplete-item .ac-delete{float:right;background:var(--danger);color:#fff;border:none;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;}
+    .save-client-btn{margin-top:8px;padding:8px 16px;background:var(--success);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:all .2s;}
+    .save-client-btn:hover{transform:scale(1.03)}
+    .checkbox-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+    .checkbox-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f5f5f5;border-radius:8px;cursor:pointer;transition:background .2s;}
+    .checkbox-item:hover{background:#e8eaf6}
+    .checkbox-item input[type="checkbox"],.checkbox-item input[type="radio"]{width:18px;height:18px;accent-color:var(--primary)}
+    .checkbox-item label{font-size:14px;cursor:pointer;margin:0;font-weight:500;color:var(--text)}
+    .btn-container{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:30px 0}
+    .btn{padding:14px 28px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .3s;text-transform:uppercase;letter-spacing:1px;}
+    .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;box-shadow:0 4px 12px rgba(26,35,126,.4)}
+    .btn-primary:hover{transform:translateY(-2px)}
+    .btn-success{background:linear-gradient(135deg,var(--success),#43a047);color:#fff}.btn-success:hover{transform:translateY(-2px)}
+    .btn-danger{background:linear-gradient(135deg,#c62828,#e53935);color:#fff}
+    .btn-outline{background:#fff;color:var(--primary);border:2px solid var(--primary)}.btn-outline:hover{background:var(--primary);color:#fff}
+    .btn-registro{background:linear-gradient(135deg,#e65100,#ef6c00);color:#fff}.btn-registro:hover{transform:translateY(-2px)}
+    .tab-container{display:flex;gap:0;flex-wrap:wrap}
+    .tab-btn{padding:12px 20px;border:none;background:#e0e0e0;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-light);transition:all .3s;border-radius:10px 10px 0 0;}
+    .tab-btn.active{background:var(--card-bg);color:var(--primary);box-shadow:0 -2px 8px rgba(0,0,0,.1)}
+    .tab-content{display:none}.tab-content.active{display:block}
+    .notification{position:fixed;top:90px;right:20px;padding:14px 24px;background:var(--success);color:#fff;border-radius:10px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:9000;transform:translateX(400px);transition:transform .4s ease;}
+    .notification.show{transform:translateX(0)}
+    .cert-list{list-style:none}
+    .cert-list li{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#f5f5f5;border-radius:8px;margin-bottom:8px;}
+    .cert-list li:hover{background:#e8eaf6}
+    .cert-list li .cert-info{font-weight:600}.cert-list li .cert-meta{font-size:12px;color:var(--text-light)}
+    .cert-list li .cert-actions{display:flex;gap:8px}
+    .cert-list li .cert-actions button{padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;}
+    .btn-load{background:var(--primary);color:#fff}.btn-delete{background:var(--danger);color:#fff}
+    .client-card{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#f5f5f5;border-radius:10px;margin-bottom:10px;border-left:4px solid var(--primary);}
+    .client-card:hover{background:#e8eaf6}.client-card .cc-info{flex:1}
+    .client-card .cc-name{font-weight:700;font-size:15px;color:var(--primary)}.client-card .cc-addr{font-size:13px;color:var(--text-light);margin-top:3px}
+    .client-card .cc-actions{display:flex;gap:8px}.client-card .cc-actions button{padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600}
+    .empty-state{text-align:center;padding:40px;color:#999;font-size:15px}.empty-state .empty-icon{font-size:48px;margin-bottom:10px}
+    .search-bar{display:flex;gap:10px;margin-bottom:20px}.search-bar input{flex:1;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:15px}
+    .search-bar input:focus{outline:none;border-color:var(--primary)}
+    .reg-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:8000;align-items:flex-start;justify-content:center;padding-top:50px;}
+    .reg-overlay.open{display:flex}
+    .reg-modal{background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.35);width:min(940px,96vw);max-height:82vh;display:flex;flex-direction:column;overflow:hidden;}
+    .reg-head{background:linear-gradient(135deg,#e65100,#ef6c00);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .reg-head h2{font-size:19px;font-weight:700;}
+    .reg-head .close-btn{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font-size:14px;font-weight:600;}
+    .reg-head .close-btn:hover{background:rgba(255,255,255,.35)}
+    .reg-body{padding:22px;overflow-y:auto;flex:1}
+    .reg-srow{display:flex;gap:10px;margin-bottom:14px;}
+    .reg-srow input{flex:1;padding:9px 14px;border:2px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;}
+    .reg-srow input:focus{outline:none;border-color:var(--primary)}
+    .reg-count{font-size:13px;color:#888;margin-bottom:8px}
+    .reg-table{width:100%;border-collapse:collapse;font-size:13.5px}
+    .reg-table thead{background:var(--primary);color:#fff}
+    .reg-table thead th{padding:10px 12px;text-align:left;font-weight:600;white-space:nowrap}
+    .reg-table tbody tr:hover td{background:#f0f4ff}
+    .reg-table td{padding:9px 12px;border-bottom:1px solid #eee;vertical-align:middle}
+    .reg-num{font-weight:800;color:var(--primary);font-size:14px}
+    .reg-mat{font-weight:700}
+    .reg-rif{font-size:12px;color:#555;max-width:220px}
+    .reg-date{white-space:nowrap}
+    .reg-table .btn-sm{padding:5px 11px;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700;margin-right:4px}
+    .reg-empty{text-align:center;padding:50px;color:#aaa;font-size:15px}
+
+    /* PAGINE */
+    .preview-container{max-width:1100px;margin:0 auto;padding:0 20px 40px}
+    .page{width:210mm;height:297mm;margin:24px auto;padding:10mm 15mm 6mm 15mm;background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.15);font-family:'Times New Roman',Times,serif;font-size:11pt;color:#000;position:relative;page-break-after:always;overflow:hidden;}
+    .letterhead-spacer{height:40mm}
+    .cert-title{text-align:center;font-weight:bold;font-style:italic;font-size:15pt;margin:6px 0 3px;line-height:1.3}
+    .cert-subtitle{text-align:center;font-weight:bold;font-style:italic;font-size:12pt;margin-bottom:6px}
+    .cert-declaration{text-align:center;font-weight:bold;font-style:italic;font-size:9.5pt;margin-bottom:6px;line-height:1.3}
+    .info-layout{display:flex;align-items:stretch;gap:12px;margin:8px 0;}
+    .matricola-box{border:2pt solid #000;padding:8px 18px;font-weight:bold;font-size:11pt;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-width:42%;text-align:center;white-space:nowrap;}
+    .info-right-col{display:flex;flex-direction:column;flex:1;gap:6px;}
+    .box-committente{border:1.5pt solid #000;padding:6px 14px;font-size:12pt;line-height:1.3;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;flex:1;}
+    .box-riferimento{border:1.5pt solid #000;padding:6px 14px;font-size:12pt;line-height:1.3;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;flex:1;}
+    .box-committente .bl,.box-riferimento .bl{font-weight:bold;font-size:10.5pt;}
+    .tension-line{text-align:center;font-style:italic;margin:8px 0;font-size:10pt}
+    .conformity-text{font-weight:bold;text-align:center;font-size:9.5pt;margin:6px 0}
+    .norm-section{margin:5px 0;font-size:9pt;line-height:1.4}
+    .norm-section .section-title{font-weight:bold;margin-top:4px;margin-bottom:1px}
+    .norm-section ul{margin-left:5px;list-style:none}
+    .norm-section ul li::before{content:"- "}
+    .small-note{font-size:8pt;line-height:1.3;margin:3px 0}
+    .page-footer{position:absolute;bottom:6mm;left:15mm;right:auto;}
+    .page-footer.split{left:15mm;right:15mm;display:flex;justify-content:space-between;align-items:flex-end;}
+    .page-footer .fdate{font-size:10pt;margin-bottom:5px}
+    .page-footer .ftitle{font-size:10pt;font-weight:bold;margin-bottom:8px}
+    .stamp-box{width:185px;height:72px;border:1px dashed #aaa;display:flex;align-items:center;justify-content:center;font-size:8pt;color:#aaa;font-family:Arial,sans-serif;border-radius:5px;background:#fafafa;}
+    .footer-left{display:flex;flex-direction:column;}
+    .footer-right{display:flex;flex-direction:column;align-items:flex-end;}
+    .test-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:9pt}
+    .test-table th,.test-table td{border:1px solid #000;padding:3px 6px;text-align:left}
+    .test-table th{background:#f0f0f0;font-weight:bold;text-align:center}
+    .test-table .pos-col,.test-table .neg-col{text-align:center;width:45px;font-weight:bold;font-size:11pt}
+    .dielectric-table{width:100%;border-collapse:collapse;margin:6px 0;font-size:8.5pt}
+    .dielectric-table td{border:1px solid #000;padding:3px 6px}
+    .result-text{text-align:center;font-weight:bold;font-style:italic;font-size:10pt;margin:8px 0;line-height:1.4}
+    .p4-table{width:100%;border-collapse:collapse;font-size:9.5pt}
+    .p4-table td{border:1px solid #000;padding:4px 7px;vertical-align:top}
+    .p4-table .lbl{font-weight:bold;background:#f5f5f5}
+    .section-box{border:2px solid #000;text-align:center;padding:5px;font-weight:bold;font-style:italic;font-size:11pt;margin:12px 0 8px}
+    .construct-row{display:flex;align-items:center;margin:8px 0;gap:12px;flex-wrap:wrap}
+    .construct-label{font-weight:bold;min-width:170px;font-size:10pt}
+    .construct-option{display:flex;align-items:center;gap:4px;font-size:10pt}
+    .construct-option .box{width:22px;height:22px;border:1.5pt solid #000;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;font-size:13pt;}
+    .dimension-row{display:flex;align-items:center;gap:12px;margin:8px 0}
+    .dim-group{display:flex;align-items:center;gap:4px}
+    .dim-label{font-weight:bold;border:1.5pt solid #000;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:10pt}
+    .dim-value{border-bottom:1px solid #000;min-width:55px;padding:2px 6px;text-align:center;font-size:10pt}
+    .protection-row{display:flex;align-items:center;gap:12px;margin:8px 0;font-size:10pt}
+    .carp-row{display:flex;align-items:center;gap:15px;margin:8px 0;font-size:10pt}
+    .carp-value{border:1px solid #000;padding:3px 16px;min-width:90px;text-align:center}
+    @media print{
+      body{background:white !important;margin:0;padding:0}
+      .app-header,.form-container,.btn-container,.no-print,.notification,.reg-overlay,.login-screen{display:none !important}
+      .preview-container{padding:0 !important;max-width:none !important}
+      .page{box-shadow:none !important;margin:0 !important;padding:8mm 12mm 6mm 12mm !important;width:100% !important;height:297mm !important;page-break-after:always !important;page-break-inside:avoid !important;overflow:hidden !important;}
+      .page:last-child{page-break-after:auto !important}
+      .stamp-box{border:none !important;background:transparent !important;color:transparent !important}
+      @page{size:A4;margin:0}
+    }
+    @media (max-width:768px){
+      .form-grid{grid-template-columns:1fr}
+      .app-header{flex-direction:column;text-align:center}
+      .page{width:100%;min-height:auto;padding:8mm;font-size:9pt}
+      .btn{width:100%;justify-content:center}
+      .info-layout{flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+
+<!-- SCHERMATA LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">EM</div>
+    <h2>Elettromeccanica Marino</h2>
+    <p>Inserisci la password per accedere</p>
+    <input type="password" id="loginPwd" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Accedi</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<div class="app-header">
+  <div class="logo-circle">EM</div>
+  <div>
+    <h1>Certificati di Conformità — Quadri Elettrici BT</h1>
+    <p>CEI EN 61439-1 / CEI EN 61439-2 — Elettromeccanica Marino</p>
+  </div>
+  <button class="logout-btn" onclick="doLogout()">🚪 Esci</button>
+</div>
+
+<div class="notification" id="notification"></div>
+
+<!-- REGISTRO MODALE -->
+<div class="reg-overlay" id="regOverlay">
+  <div class="reg-modal">
+    <div class="reg-head">
+      <h2>📋 Registro Certificati</h2>
+      <button class="close-btn" onclick="closeRegistro()">✕ Chiudi</button>
+    </div>
+    <div class="reg-body">
+      <div class="reg-srow">
+        <input type="text" id="regSearch" placeholder="🔍 Cerca per N°, matricola, riferimento, committente…" oninput="renderRegistro()">
+      </div>
+      <div class="reg-count" id="regCount"></div>
+      <div id="regTableWrap"></div>
+    </div>
+  </div>
+</div>
+
+<div class="form-container no-print">
+  <div class="tab-container">
+    <button class="tab-btn active" onclick="switchTab(this,'tab-dati')">📋 Dati Generali</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-tecnici')">⚡ Dati Tecnici</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-costruttivi')">📐 Caratteristiche</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-cablaggio')">🔌 Cablaggio</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-clienti')">👥 Rubrica Clienti</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-archivio')">💾 Archivio</button>
+  </div>
+
+  <div class="tab-content active" id="tab-dati">
+    <div class="form-section">
+      <h2><span class="icon">📋</span> Dati Generali del Certificato</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Matricola Quadro</label>
+          <div class="mat-row">
+            <input type="text" id="matricola" placeholder="Auto: 001/2026" oninput="_matEdited=true">
+            <div class="progr-badge" title="Progressivo automatico">N°&nbsp;<span class="pnum" id="progrPreview">—</span></div>
+          </div>
+          <div class="field-hint">Compilata automaticamente con il progressivo (es. 001/2026) — modificabile a piacere</div>
+        </div>
+        <div class="form-group"><label>Data</label><input type="date" id="dataCert"></div>
+        <div class="form-group"><label>Anno Marcatura CE</label><input type="text" id="annoMarcatura" placeholder="2026"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h2><span class="icon">👤</span> Committente — <small style="font-weight:400;font-size:13px;">digita per cercare in rubrica</small></h2>
+      <div class="form-grid">
+        <div class="form-group full-width" style="position:relative;">
+          <label>Nome / Ragione Sociale</label>
+          <input type="text" id="committente" placeholder="Digita per cercare…" autocomplete="off">
+          <div class="autocomplete-list" id="acList"></div>
+        </div>
+        <div class="form-group full-width">
+          <label>Indirizzo Committente</label>
+          <input type="text" id="indirizzoCommittente" placeholder="Via, CAP, Città (Prov)">
+        </div>
+      </div>
+      <div style="margin-top:10px;"><button class="save-client-btn" onclick="saveClient()">💾 Salva cliente in rubrica</button></div>
+    </div>
+    <div class="form-section">
+      <h2><span class="icon">🏷️</span> Denominazione e Riferimento Quadro</h2>
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label>Denominazione Quadro Elettrico</label>
+          <input type="text" id="denominazione" placeholder="es. Quadro Generale Rifasamento Lotto 3">
+        </div>
+        <div class="form-group full-width">
+          <label>Riferimento / Ubicazione</label>
+          <textarea id="riferimento" placeholder="es. ASL Teramo&#10;Edificio B - Piano 2"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-tecnici">
+    <div class="form-section">
+      <h2><span class="icon">⚡</span> Dati Elettrici</h2>
+      <div class="form-grid">
+        <div class="form-group"><label>Tensione Nominale Un (V)</label><input type="number" id="tensioneNom" value="400"></div>
+        <div class="form-group"><label>Corrente Nominale In (A)</label><input type="number" id="correnteNom" placeholder="340"></div>
+        <div class="form-group"><label>Tensione di Isolamento (V)</label><input type="number" id="tensioneIsol" value="500"></div>
+        <div class="form-group"><label>Frequenza Nominale (Hz)</label><input type="number" id="frequenza" value="50"></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h2><span class="icon">✅</span> Esiti Prove (Pagina 3)</h2>
+      <div class="checkbox-grid">
+        <div class="checkbox-item"><input type="checkbox" id="prova1" checked><label for="prova1">Art. 10.2 Cablaggio</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="prova2" checked><label for="prova2">Art. 10.3 Grado protezione</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="prova3" checked><label for="prova3">Art. 10.4 Distanze isolamento</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="prova4" checked><label for="prova4">Art. 10.5 Protezione contatti</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="prova5" checked><label for="prova5">Art. 10.6 Installazione app.</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="prova6" checked><label for="prova6">Art. 10.7 Circuiti interni</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="prova7" checked><label for="prova7">Art. 10.7 Terminali cond.</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="prova8" checked><label for="prova8">Art. 10.9 Prop. dielettriche</label></div>
+      </div>
+      <h3 style="margin-top:20px;margin-bottom:10px;font-size:14px;color:var(--primary);">Prova Dielettrica</h3>
+      <div class="checkbox-grid">
+        <div class="checkbox-item"><input type="radio" name="provaDiel" id="dielA" value="a"><label for="dielA">a) Tenuta freq. esercizio</label></div>
+        <div class="checkbox-item"><input type="radio" name="provaDiel" id="dielB" value="b"><label for="dielB">b) Tenuta a impulso</label></div>
+        <div class="checkbox-item"><input type="radio" name="provaDiel" id="dielC" value="c"><label for="dielC">c) Resistenza isolamento</label></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-costruttivi">
+    <div class="form-section">
+      <h2><span class="icon">📐</span> Dimensioni e Installazione</h2>
+      <div class="form-grid">
+        <div class="form-group"><label>Larghezza L (mm)</label><input type="number" id="dimL" placeholder="620"></div>
+        <div class="form-group"><label>Altezza H (mm)</label><input type="number" id="dimH" placeholder="650"></div>
+        <div class="form-group"><label>Profondità P (mm)</label><input type="number" id="dimP" placeholder="310"></div>
+        <div class="form-group">
+          <label>Grado di Protezione</label>
+          <select id="gradoProtezione">
+            <option>IP20</option><option>IP30</option><option>IP31</option><option>IP40</option><option>IP41</option>
+            <option>IP43</option><option>IP44</option><option>IP54</option><option>IP55</option>
+            <option selected>IP65</option><option>IP66</option>
+          </select>
+        </div>
+        <div class="form-group"><label>N° Colonne</label><input type="number" id="numColonne" value="1" min="1"></div>
+      </div>
+      <h3 style="margin-top:20px;margin-bottom:10px;font-size:14px;color:var(--primary);">Installazione</h3>
+      <div class="checkbox-grid">
+        <div class="checkbox-item"><input type="radio" name="installazione" id="instInterno" value="interno" checked><label for="instInterno">All'interno</label></div>
+        <div class="checkbox-item"><input type="radio" name="installazione" id="instEsterno" value="esterno"><label for="instEsterno">All'esterno</label></div>
+        <div class="checkbox-item"><input type="radio" name="installazione" id="instAltro" value="altro"><label for="instAltro">Altro</label></div>
+      </div>
+      <div class="form-group" style="margin-top:8px;"><label>Se "Altro":</label><input type="text" id="instAltroText" placeholder="Specificare…"></div>
+      <h3 style="margin-top:20px;margin-bottom:10px;font-size:14px;color:var(--primary);">Accessibilità</h3>
+      <div class="checkbox-grid">
+        <div class="checkbox-item"><input type="checkbox" id="accFronte" checked><label for="accFronte">Fronte</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="accRetro"><label for="accRetro">Retro</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="accFronteFianchi"><label for="accFronteFianchi">Fronte + Fianchi</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="accTotale"><label for="accTotale">Totale</label></div>
+      </div>
+    </div>
+    <div class="form-section">
+      <h2><span class="icon">🏗️</span> Carpenteria</h2>
+      <div class="form-grid">
+        <div class="form-group"><label>Marca</label><input type="text" id="carpMarca" placeholder="ABB, Schneider…"></div>
+        <div class="form-group">
+          <label>Materiale</label>
+          <select id="carpMateriale">
+            <option selected>Metallo</option><option>Plastica</option><option>Poliestere</option><option>Acciaio Inox</option><option>Vetroresina</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-cablaggio">
+    <div class="form-section">
+      <h2><span class="icon">🔌</span> Cablaggio</h2>
+      <h3 style="margin-bottom:10px;font-size:14px;color:var(--primary);">Morsettiere Utenze</h3>
+      <div class="checkbox-grid">
+        <div class="checkbox-item"><input type="checkbox" id="morsAlto"><label for="morsAlto">In Alto</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="morsBasso"><label for="morsBasso">In Basso</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="morsVanoSx"><label for="morsVanoSx">Vano Cavi Sx</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="morsVanoCle"><label for="morsVanoCle">Vano Cavi Cle</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="morsVanoDx"><label for="morsVanoDx">Vano Cavi Dx</label></div>
+      </div>
+      <h3 style="margin-top:20px;margin-bottom:10px;font-size:14px;color:var(--primary);">Alimentazione Interruttore Generale</h3>
+      <div class="checkbox-grid">
+        <div class="checkbox-item"><input type="radio" name="alimGen" id="alimDirettoAnt" value="direttoAnt" checked><label for="alimDirettoAnt">Diretto Anteriore</label></div>
+        <div class="checkbox-item"><input type="radio" name="alimGen" id="alimDirettoPost" value="direttoPost"><label for="alimDirettoPost">Diretto Posteriore</label></div>
+        <div class="checkbox-item"><input type="radio" name="alimGen" id="alimMorsetti" value="morsetti"><label for="alimMorsetti">Da Morsetti</label></div>
+        <div class="checkbox-item"><input type="radio" name="alimGen" id="alimPettini" value="pettini"><label for="alimPettini">Da Pettini</label></div>
+      </div>
+      <h3 style="margin-top:20px;margin-bottom:10px;font-size:14px;color:var(--primary);">Collegamento Prefabbricato</h3>
+      <div class="checkbox-grid">
+        <div class="checkbox-item"><input type="checkbox" id="collPrefab"><label for="collPrefab">Collegamento Prefabbricato</label></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-clienti">
+    <div class="form-section">
+      <h2><span class="icon">👥</span> Rubrica Clienti</h2>
+      <div class="search-bar"><input type="text" id="clientSearch" placeholder="🔍 Cerca cliente…" oninput="filterClients()"></div>
+      <div id="clientsList"></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-archivio">
+    <div class="form-section">
+      <h2><span class="icon">💾</span> Certificati Salvati</h2>
+      <ul class="cert-list" id="certList"></ul>
+    </div>
+  </div>
+
+  <div class="btn-container">
+    <button class="btn btn-primary"  onclick="generatePreview()">👁 Anteprima</button>
+    <button class="btn btn-success"  onclick="printCert()">🖨 Stampa / PDF</button>
+    <button class="btn btn-outline"  onclick="saveCert()">💾 Salva Certificato</button>
+    <button class="btn btn-registro" onclick="openRegistro()">📋 Registro</button>
+    <button class="btn" style="background:linear-gradient(135deg,#00695c,#00897b);color:#fff;" onclick="exportData()">📤 Esporta</button>
+    <button class="btn" style="background:linear-gradient(135deg,#4527a0,#7e57c2);color:#fff;" onclick="G('importFile').click()">📥 Importa</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+    <button class="btn btn-danger"   onclick="resetForm()">↺ Reset</button>
+  </div>
+</div>
+
+<div class="preview-container" id="previewContainer"></div>
+
+<script>
+'use strict';
+var acIndex=-1,_progr=null,_certKey=null,_matEdited=false;
+var _clients={},_certs={},_registro={};
+
+function G(id){return document.getElementById(id)}
+function notify(msg,type){
+  var n=G('notification');n.textContent=msg;
+  n.style.background=type==='error'?'#c62828':type==='warn'?'#e65100':'#2e7d32';
+  n.classList.add('show');setTimeout(function(){n.classList.remove('show')},3200);
+}
+
+/* ===== LOGIN ===== */
+function doLogin(){
+  var pwd=G('loginPwd').value;
+  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})})
+    .then(function(r){return r.json()})
+    .then(function(data){
+      if(data.ok){G('loginScreen').classList.remove('show');initApp();}
+      else{G('loginError').textContent='Password errata';G('loginPwd').value='';}
+    }).catch(function(){G('loginError').textContent='Errore di connessione';});
+}
+function doLogout(){
+  fetch('/api/logout',{method:'POST'}).then(function(){
+    G('loginScreen').classList.add('show');
+    G('loginPwd').value='';G('loginError').textContent='';
+  });
+}
+
+/* ===== API HELPERS ===== */
+function apiGet(url){return fetch(url).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();})}
+function apiPut(url,data){return fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json();})}
+function apiDel(url){return fetch(url,{method:'DELETE'}).then(function(r){return r.json();})}
+function apiPost(url,data){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){return r.json();})}
+
+/* ===== INIT ===== */
+function initApp(){
+  Promise.all([apiGet('/api/certs'),apiGet('/api/registro'),apiGet('/api/clients')])
+    .then(function(results){
+      _certs=results[0];_registro=results[1];_clients=results[2];
+      G('dataCert').value=new Date().toISOString().split('T')[0];
+      G('annoMarcatura').value=new Date().getFullYear();
+      loadCertList();refreshBadge();
+    }).catch(function(){notify('Errore caricamento dati','error');});
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  fetch('/api/me').then(function(r){return r.json()}).then(function(d){
+    if(d.auth){initApp();}
+    else{G('loginScreen').classList.add('show');}
+  });
+  G('regOverlay').addEventListener('click',function(e){if(e.target===G('regOverlay'))closeRegistro()});
+  G('loginPwd').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+  var inp=G('committente');
+  inp.addEventListener('input',function(){
+    var v=this.value.trim().toLowerCase();if(v.length<1){hideAC();return;}
+    showAC(Object.keys(_clients).filter(function(k){return _clients[k].name.toLowerCase().includes(v)}).map(function(k){return Object.assign({key:k},_clients[k])}));
+  });
+  inp.addEventListener('focus',function(){
+    var v=this.value.trim().toLowerCase();if(v.length>=1){
+      showAC(Object.keys(_clients).filter(function(k){return _clients[k].name.toLowerCase().includes(v)}).map(function(k){return Object.assign({key:k},_clients[k])}));}
+  });
+  inp.addEventListener('blur',function(){setTimeout(hideAC,200)});
+  inp.addEventListener('keydown',function(e){
+    var list=G('acList'),items=list.querySelectorAll('.autocomplete-item');
+    if(!list.classList.contains('show')||!items.length)return;
+    if(e.key==='ArrowDown'){e.preventDefault();acIndex=Math.min(acIndex+1,items.length-1);items.forEach(function(el,i){el.classList.toggle('selected',i===acIndex)})}
+    else if(e.key==='ArrowUp'){e.preventDefault();acIndex=Math.max(acIndex-1,0);items.forEach(function(el,i){el.classList.toggle('selected',i===acIndex)})}
+    else if(e.key==='Enter'){e.preventDefault();if(acIndex>=0&&items[acIndex])selectAC(items[acIndex].dataset.key)}
+    else if(e.key==='Escape')hideAC();
+  });
+});
+
+/* ===== TABS ===== */
+function switchTab(btn,tabId){
+  document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
+  G(tabId).classList.add('active');btn.classList.add('active');
+  if(tabId==='tab-clienti')renderClientsList();
+  if(tabId==='tab-archivio')loadCertList();
+}
+function switchTabById(tabId){
+  document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});
+  document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
+  G(tabId).classList.add('active');
+  var order=['tab-dati','tab-tecnici','tab-costruttivi','tab-cablaggio','tab-clienti','tab-archivio'];
+  var btns=document.querySelectorAll('.tab-btn');
+  var idx=order.indexOf(tabId);if(idx>=0&&btns[idx])btns[idx].classList.add('active');
+}
+
+/* ===== PROGRESSIVO ===== */
+function nextProgr(){
+  var year=new Date().getFullYear();
+  var nums=Object.values(_registro).filter(function(r){return r.anno===year}).map(function(r){return r.progressivo||0});
+  return{num:nums.length?Math.max.apply(null,nums)+1:1,year:year};
+}
+function fmtP(num,year){return String(num).padStart(3,'0')+'/'+year}
+function refreshBadge(){
+  var p=_progr||nextProgr();
+  G('progrPreview').textContent=fmtP(p.num,p.year);
+  if(!_matEdited&&!_progr)G('matricola').value=fmtP(p.num,p.year);
+}
+
+/* ===== REGISTRO ===== */
+function openRegistro(){G('regOverlay').classList.add('open');renderRegistro()}
+function closeRegistro(){G('regOverlay').classList.remove('open')}
+function renderRegistro(){
+  var q=(G('regSearch').value||'').toLowerCase().trim();
+  var items=Object.values(_registro);
+  if(q)items=items.filter(function(r){
+    return fmtP(r.progressivo,r.anno).toLowerCase().includes(q)||
+      (r.matricola||'').toLowerCase().includes(q)||(r.riferimento||'').toLowerCase().includes(q)||
+      (r.committente||'').toLowerCase().includes(q)||(r.denominazione||'').toLowerCase().includes(q);
+  });
+  items.sort(function(a,b){return(b.anno*10000+(b.progressivo||0))-(a.anno*10000+(a.progressivo||0))});
+  G('regCount').textContent=items.length+' certificat'+(items.length===1?'o':'i');
+  if(!items.length){G('regTableWrap').innerHTML='<div class="reg-empty">📋 Nessun certificato nel registro</div>';return;}
+  var rows=items.map(function(r){
+    var rif=(r.riferimento||'').replace(/\n/g,' ').slice(0,55);
+    return'<tr><td><span class="reg-num">'+fmtP(r.progressivo,r.anno)+'</span></td>'+
+      '<td><span class="reg-mat">'+(r.matricola||'—')+'</span></td>'+
+      '<td><div style="font-weight:600">'+(r.denominazione||'—')+'</div><div class="reg-rif">'+rif+'</div></td>'+
+      '<td>'+(r.committente||'—')+'</td><td class="reg-date">'+(r.data||'—')+'</td>'+
+      '<td><button class="btn-sm btn-load" onclick="loadFromReg(\''+r.certKey+'\')">Apri</button>'+
+      '<button class="btn-sm btn-delete" onclick="delFromReg(\''+r.id+'\',\''+r.certKey+'\')">✕</button></td></tr>';
+  }).join('');
+  G('regTableWrap').innerHTML='<table class="reg-table"><thead><tr><th>N°</th><th>Matricola</th><th>Denominazione / Riferimento</th><th>Committente</th><th>Data</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function loadFromReg(certKey){closeRegistro();loadCert(certKey)}
+function delFromReg(regId,certKey){
+  if(!confirm('Eliminare dal registro e dall\'archivio?'))return;
+  Promise.all([apiDel('/api/registro/'+regId),apiDel('/api/certs/'+certKey)])
+    .then(function(){delete _registro[regId];delete _certs[certKey];renderRegistro();loadCertList();notify('Eliminato','warn');});
+}
+
+/* ===== CLIENTI ===== */
+function saveClient(){
+  var name=G('committente').value.trim(),addr=G('indirizzoCommittente').value.trim();
+  if(!name){notify('Inserisci il nome committente','error');return;}
+  var key=name.toLowerCase().replace(/[^a-z0-9]/g,'_');
+  var client={name:name,address:addr,savedAt:new Date().toLocaleString('it-IT')};
+  apiPut('/api/clients/'+key,client).then(function(){_clients[key]=client;notify('Cliente salvato in rubrica');hideAC();});
+}
+function deleteClient(key){
+  if(!confirm('Eliminare?'))return;
+  apiDel('/api/clients/'+key).then(function(){delete _clients[key];renderClientsList(G('clientSearch').value);});
+}
+function useClient(key){
+  var c=_clients[key];if(!c)return;
+  G('committente').value=c.name;G('indirizzoCommittente').value=c.address||'';switchTabById('tab-dati');
+}
+function editClient(key){
+  var c=_clients[key];if(!c)return;
+  var card=document.querySelector('.client-card[data-key="'+key+'"]');if(!card)return;
+  card.innerHTML='<div style="flex:1;display:flex;flex-direction:column;gap:8px;">'+
+    '<input id="editName_'+key+'" type="text" value="'+c.name.replace(/"/g,'&quot;')+'" style="padding:8px 12px;border:2px solid var(--primary);border-radius:7px;font-size:14px;font-family:inherit;width:100%">'+
+    '<input id="editAddr_'+key+'" type="text" value="'+(c.address||'').replace(/"/g,'&quot;')+'" placeholder="Indirizzo" style="padding:8px 12px;border:2px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;width:100%">'+
+    '<div style="display:flex;gap:8px;margin-top:2px;">'+
+    '<button onclick="saveEditClient(\''+key+'\')" style="padding:7px 18px;background:var(--success);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;">✓ Salva</button>'+
+    '<button onclick="renderClientsList(G(\'clientSearch\').value)" style="padding:7px 18px;background:#999;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">✕ Annulla</button>'+
+    '</div></div>';
+  document.getElementById('editName_'+key).focus();
+}
+function saveEditClient(key){
+  var newName=document.getElementById('editName_'+key).value.trim();
+  var newAddr=document.getElementById('editAddr_'+key).value.trim();
+  if(!newName){notify('Il nome non può essere vuoto','error');return;}
+  var oldData=_clients[key];
+  var newKey=newName.toLowerCase().replace(/[^a-z0-9]/g,'_');
+  var newClient=Object.assign({},oldData,{name:newName,address:newAddr});
+  var ops=[apiPut('/api/clients/'+newKey,newClient)];
+  if(newKey!==key)ops.push(apiDel('/api/clients/'+key));
+  Promise.all(ops).then(function(){
+    if(newKey!==key)delete _clients[key];
+    _clients[newKey]=newClient;
+    notify('Cliente aggiornato');renderClientsList(G('clientSearch').value);
+  });
+}
+function renderClientsList(filter){
+  filter=filter||'';
+  var keys=Object.keys(_clients).filter(function(k){return!filter||_clients[k].name.toLowerCase().includes(filter.toLowerCase())});
+  var container=G('clientsList');
+  if(!keys.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">👥</div>'+(filter?'Nessun risultato':'Nessun cliente salvato')+'</div>';return;}
+  container.innerHTML=keys.map(function(k){var c=_clients[k];return'<div class="client-card" data-key="'+k+'"><div class="cc-info"><div class="cc-name">'+c.name+'</div><div class="cc-addr">'+(c.address||'—')+'</div></div><div class="cc-actions"><button class="btn-load" onclick="useClient(\''+k+'\')">Usa</button><button style="background:#e65100;color:#fff;" onclick="editClient(\''+k+'\')">✏️ Modifica</button><button class="btn-delete" onclick="deleteClient(\''+k+'\')">Elimina</button></div></div>';}).join('');
+}
+function filterClients(){renderClientsList(G('clientSearch').value)}
+
+/* ===== AUTOCOMPLETE ===== */
+function showAC(items){
+  var list=G('acList');if(!items.length){hideAC();return;}acIndex=-1;
+  var q=G('committente').value;
+  list.innerHTML=items.map(function(item){return'<div class="autocomplete-item" data-key="'+item.key+'" onmousedown="selectAC(\''+item.key+'\')"><button class="ac-delete" onmousedown="event.stopPropagation();deleteClientAC(\''+item.key+'\')">✕</button><div class="ac-name">'+hlMatch(item.name,q)+'</div><div class="ac-detail">'+(item.address||'—')+'</div></div>';}).join('');
+  list.classList.add('show');
+}
+function hideAC(){G('acList').classList.remove('show');acIndex=-1}
+function hlMatch(t,q){if(!q)return t;return t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<strong style="color:#1a237e;background:#fff9c4">$1</strong>')}
+function selectAC(key){var c=_clients[key];if(!c)return;G('committente').value=c.name;G('indirizzoCommittente').value=c.address||'';hideAC()}
+function deleteClientAC(key){if(!confirm('Eliminare dalla rubrica?'))return;apiDel('/api/clients/'+key).then(function(){delete _clients[key];hideAC();})}
+
+/* ===== ESPORTA / IMPORTA ===== */
+function exportData(){
+  window.location.href='/api/backup';
+  notify('Download backup in corso ✓');
+}
+function importData(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      if(!data.em_certs&&!data.em_registro&&!data.em_clients){notify('File non valido','error');input.value='';return;}
+      if(!confirm('Importare i dati? Verranno uniti a quelli esistenti.'))return;
+      apiPost('/api/import',data).then(function(){
+        return Promise.all([apiGet('/api/certs'),apiGet('/api/registro'),apiGet('/api/clients')]);
+      }).then(function(results){
+        _certs=results[0];_registro=results[1];_clients=results[2];
+        loadCertList();refreshBadge();notify('Importazione completata ✓');
+      });
+    }catch(err){notify('Errore lettura file','error');}
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+/* ===== DATI ===== */
+function fmtDate(ds){if(!ds)return'';var d=new Date(ds);return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})}
+function getData(){
+  return{
+    matricola:G('matricola').value,data:fmtDate(G('dataCert').value),dataRaw:G('dataCert').value,
+    annoMarcatura:G('annoMarcatura').value,committente:G('committente').value,
+    indirizzoCommittente:G('indirizzoCommittente').value,denominazione:G('denominazione').value,
+    riferimento:G('riferimento').value,tensioneNom:G('tensioneNom').value,correnteNom:G('correnteNom').value,
+    tensioneIsol:G('tensioneIsol').value,frequenza:G('frequenza').value,
+    dimL:G('dimL').value,dimH:G('dimH').value,dimP:G('dimP').value,
+    gradoProtezione:G('gradoProtezione').value,numColonne:G('numColonne').value,
+    installazione:(document.querySelector('input[name="installazione"]:checked')||{}).value||'interno',
+    instAltroText:G('instAltroText').value,
+    accFronte:G('accFronte').checked,accRetro:G('accRetro').checked,
+    accFronteFianchi:G('accFronteFianchi').checked,accTotale:G('accTotale').checked,
+    carpMarca:G('carpMarca').value,carpMateriale:G('carpMateriale').value,
+    prove:[1,2,3,4,5,6,7,8].map(function(i){return G('prova'+i).checked}),
+    provaDiel:(document.querySelector('input[name="provaDiel"]:checked')||{}).value||'',
+    morsAlto:G('morsAlto').checked,morsBasso:G('morsBasso').checked,
+    morsVanoSx:G('morsVanoSx').checked,morsVanoCle:G('morsVanoCle').checked,morsVanoDx:G('morsVanoDx').checked,
+    alimGen:(document.querySelector('input[name="alimGen"]:checked')||{}).value||'direttoAnt',
+    collPrefab:G('collPrefab').checked,
+    progressivo:_progr
+  };
+}
+
+/* ===== HTML HELPERS ===== */
+function spacer(){return'<div class="letterhead-spacer"></div>'}
+function infoBoxes(d){
+  var rif=d.denominazione||'';
+  if(d.riferimento){var lines=d.riferimento.split('\n').map(function(l){return l.trim()}).filter(function(l){return l});if(rif&&lines.length)rif+='<br>';rif+=lines.join('<br>')}
+  return'<div class="info-layout">'+
+    '<div class="matricola-box">MATRICOLA QUADRO: '+(d.matricola||'')+'</div>'+
+    '<div class="info-right-col">'+
+      '<div class="box-committente"><span class="bl">Committente:</span>&nbsp;'+(d.committente||'')+'</div>'+
+      '<div class="box-riferimento"><span class="bl">Riferimento:</span>&nbsp;'+(rif||'')+'</div>'+
+    '</div>'+
+  '</div>';
+}
+function footer(d,title){
+  title=title||'IL LEGALE RAPPRESENTANTE';
+  return'<div class="page-footer"><div class="fdate">S. Benedetto del Tr., '+d.data+'</div><div class="ftitle">'+title+'</div><div class="stamp-box">Timbro e Firma</div></div>';
+}
+function footerSplit(d,title){
+  title=title||'IL LEGALE RAPPRESENTANTE';
+  return'<div class="page-footer split">'+
+    '<div class="footer-left"><div class="fdate">S. Benedetto del Tr., '+d.data+'</div></div>'+
+    '<div class="footer-right"><div class="ftitle" style="text-align:right;">'+title+'</div><div class="stamp-box">Timbro e Firma</div></div>'+
+  '</div>';
+}
+
+/* ===== PAGINE ===== */
+function genPage1(d){
+  return'<div class="page">'+spacer()+
+  '<div class="cert-title">DICHIARAZIONE DI CONFORMITA\'</div>'+
+  '<div class="cert-subtitle">SECONDO CEI EN 61439-1 E CEI EN 61439-2</div>'+
+  '<div class="cert-declaration"><em>Noi ELETTROMECCANICA MARINO, Via Col Dei pioppi, 14 – 63074 S. Benedetto del Tr. (Ap)</em><br><em>Dichiariamo, sotto la nostra responsabilità, che il quadro elettrico per bassa tensione secondo<br>CEI EN 61439-1 e CEI EN 61439-2</em></div>'+
+  infoBoxes(d)+
+  '<div class="tension-line"><em>Tensione nominale (Un): '+d.tensioneNom+'V - Corrente nominale (In) '+d.correnteNom+'A</em></div>'+
+  '<div class="conformity-text">è stato realizzato a regola d\'arte e conformemente a tutte le specifiche previste dalla Norma CEI EN 61439-2</div>'+
+  '<div class="small-note">Dichiariamo di avere rispettato i criteri di scelta e le istruzioni di montaggio indicati sui cataloghi e fogli istruzione dei fornitori e di non avere compromesso in alcun modo, durante il montaggio o attraverso modifiche, le prestazioni del materiale utilizzato dichiarate sui già citati cataloghi.</div>'+
+  '<div class="small-note">Tali prestazioni e le verifiche effettuate consentono quindi di dichiarare la conformità del quadro in questione alle seguenti richieste della norma:</div>'+
+  '<div class="norm-section"><div class="section-title">Richieste di Costruzione:</div><ul>'+
+  '<li>Robustezza dei materiali e parti del quadro; (CEI EN 61439-1 art. 10.2)</li>'+
+  '<li>Grado di protezione; (CEI EN 61439-1 art. 10.3)</li>'+
+  '<li>Distanze in aria e superficiali; (CEI EN 61439-1 art. 10.4)</li>'+
+  '<li>Protezione contro la scossa elettrica; (CEI EN 61439-1 art. 10.5)</li>'+
+  '<li>Installazione apparecchi e componenti; (CEI EN 61439-1 art. 10.6)</li>'+
+  '<li>Circuiti elettrici interni e collegamenti; (CEI EN 61439-1 art. 10.7)</li>'+
+  '<li>Terminali per conduttori esterni; (CEI EN 61439-1 art. 10.8)</li>'+
+  '</ul><div class="section-title">Richieste di prestazione</div><ul>'+
+  '<li>Proprietà dielettriche; (CEI EN 61439-1 art. 10.9)</li>'+
+  '<li>Sovratemperatura; (CEI EN 61439-1 art. 10.10)</li>'+
+  '<li>Tenuta al cortocircuito; (CEI EN 61439-1 art. 10.11)</li>'+
+  '<li>Compatibilità elettromagnetica (EMC); (CEI EN 61439-1 art. 10.12)</li>'+
+  '<li>Funzionamento meccanico; (CEI EN 61439-1 art. 10.13)</li>'+
+  '</ul></div>'+
+  '<div class="small-note">Dichiariamo infine, sotto la nostra responsabilità, di aver effettuato con risultato positivo tutte le prove individuali previste dalla norma e precisamente:</div>'+
+  '<div class="norm-section"><div class="section-title">Specifiche di costruzione:</div><ul>'+
+  '<li>grado di protezione dell\'involucro;</li><li>distanze d\'isolamento in aria e superficiali;</li>'+
+  '<li>protezione contro la scossa elettrica ed integrità dei circuiti di protezione;</li>'+
+  '<li>installazione degli apparecchi di manovra e dei componenti;</li>'+
+  '<li>circuiti elettrici interni e collegamenti;</li><li>terminali per conduttori esterni;</li><li>funzionamento meccanico.</li>'+
+  '</ul><div class="section-title">Specifiche di prestazione:</div><ul>'+
+  '<li>proprietà dielettriche;</li>'+
+  '<li>cablaggio, prestazioni in condizioni operative e funzionalità, se installato e mantenuto in conformità alla sua destinazione, alla legislazione, alle norme in vigore, alle istruzioni del costruttore e alle regole d\'arte</li>'+
+  '</ul></div>'+
+  footerSplit(d,'IL LEGALE RAPPRESENTANTE')+
+  '</div>';
+}
+function genPage2(d){
+  return'<div class="page">'+spacer()+
+  '<div class="cert-title">DICHIARAZIONE CE DI CONFORMITA\'</div>'+
+  '<div class="cert-subtitle">QUADRI ELETTRICI BT SECONDO<br>CEI EN 61439-1 E CEI EN 61439-2</div>'+
+  '<div class="cert-declaration"><em>Noi ELETTROMECCANICA MARINO, Via Col Dei pioppi, 14 – 63074 S. Benedetto del Tr. (Ap)</em><br><em>Costruttori del quadro elettrico per bassa tensione secondo CEI EN 61439-1 e CEI EN 61439-2</em></div>'+
+  '<div style="text-align:center;font-size:16pt;font-weight:bold;margin:12px 0;">DICHIARA</div>'+
+  '<p style="margin:8px 0;font-size:10pt;">sotto la propria responsabilità, che il quadro</p>'+
+  infoBoxes(d)+
+  '<p style="margin:12px 0 5px;font-size:10pt;">(anno di apposizione della marcatura <strong>'+d.annoMarcatura+'</strong>)</p>'+
+  '<p style="font-size:10pt;margin:5px 0;">risulta in conformità con quanto previsto dalle seguenti direttive comunitarie (comprese le ultime modifiche), nonché con la relativa legislazione nazionale di recepimento</p>'+
+  '<div class="norm-section"><div class="section-title">Riferimento n° Titolo</div><ul style="list-style:disc;margin-left:25px;">'+
+  '<li style="margin-bottom:5px;">La Direttiva 2006/95/CE, Direttiva bassa tensione</li>'+
+  '<li>La Direttiva EMC 2004/108/CE Direttiva compatibilità elettromagnetica 93/68/CEE Direttiva per la marcatura CE e che è stata applicata la seguente norma armonizzata</li>'+
+  '</ul><div class="section-title" style="margin-top:12px;">Codice norma edizione titolo</div><ul style="list-style:disc;margin-left:25px;">'+
+  '<li style="margin-bottom:5px;">CEI EN 61439-1 I Norma CEI EN 61439-1<br>Apparecchiature assiemate di protezione e di manovra per bassa tensione (quadri BT) Parte 1. Regole Generali.</li>'+
+  '<li>CEI EN 61439-2 I NORMA CEI EN 61439-2<br>Apparecchiature assiemate di protezione e manovra per bassa tensione. Parte 2: Quadri di potenza</li>'+
+  '</ul></div>'+
+  footer(d,'IL LEGALE RAPPRESENTANTE')+
+  '</div>';
+}
+function genPage3(d){
+  var names=["CEI EN 61439-1 Art. 10.2 Cablaggio, funzionalità, marcatura","CEI EN 61439-1 Art. 10.3 Grado di protezione dell'involucro","CEI EN 61439-1 Art. 10.4 Distanze di isolamento in aria e superficiali","CEI EN 61439-1 Art. 10.5 Protezione contro i contatti indiretti ed integrità dei circuiti di protezione","CEI EN 61439-1 Art. 10.6 Installazione degli apparecchi di manovra e dei componenti","CEI EN 61439-1 Art. 10.7 Circuiti elettrici interni e collegamenti","CEI EN 61439-1 Art. 10.7 Terminali per conduttori esterni","CEI EN 61439-1 Art. 10.9 Proprietà dielettriche"];
+  var rows=names.map(function(n,i){return'<tr><td>- '+n+'</td><td class="pos-col">'+(d.prove[i]?'X':'')+'</td><td class="neg-col">'+(!d.prove[i]?'X':'')+'</td></tr>'}).join('');
+  return'<div class="page">'+spacer()+
+  '<div class="cert-title" style="font-size:13pt;">RAPPORTO DI PROVA INDIVIDUALE</div>'+
+  '<div class="cert-subtitle" style="font-size:11pt;">QUADRI ELETTRICI BT SECONDO CEI EN 61439-1</div>'+
+  '<div class="cert-declaration" style="font-size:9pt;"><em>Noi ELETTROMECCANICA MARINO, Via Col Dei pioppi, 14 – 63074 S. Benedetto del Tr. (Ap)</em><br><em>Costruttori del quadro elettrico per bassa tensione secondo CEI EN 61439-2</em></div>'+
+  infoBoxes(d)+
+  '<div style="text-align:center;font-size:13pt;font-weight:bold;margin:8px 0;">DICHIARIAMO</div>'+
+  '<p style="text-align:center;font-size:9pt;margin-bottom:4px;">sotto la nostra responsabilità, di aver effettuato le seguenti Prove Individuali secondo le<br>Norme CEI EN 61439-1 e CEI EN 61439-2</p>'+
+  '<div style="margin:6px 0;font-size:10pt;">Tensione nominale di impiego <span style="margin-left:30px;">Un (V) = '+d.tensioneNom+'</span></div>'+
+  '<div style="margin:6px 0 12px;font-size:10pt;">Corrente nominale del circuito d\'ingresso <span style="margin-left:30px;">In (A) = '+d.correnteNom+'</span></div>'+
+  '<div style="text-align:center;font-size:10pt;margin-bottom:6px;">Esito</div>'+
+  '<table class="test-table"><thead><tr><th style="text-align:left;"></th><th>POS</th><th>NEG</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+  '<table class="dielectric-table" style="margin-top:8px;"><thead><tr>'+
+  '<th style="text-align:left;font-size:8.5pt;font-weight:bold;padding:4px 6px;background:#f0f0f0;">CEI EN 61439-1 Art. 10.9 — Proprietà dielettriche prova effettuata (in alternativa)</th>'+
+  '<th style="text-align:center;font-size:8pt;background:#f0f0f0;width:110px;">Barrare<br>la prova eseguita</th>'+
+  '</tr></thead>'+
+  '<tr><td>a) Tensione di tenuta a frequenza di esercizio</td><td style="text-align:center;">'+(d.provaDiel==='a'?'X':'')+'</td></tr>'+
+  '<tr><td>b) Tensione di tenuta a impulso</td><td style="text-align:center;">'+(d.provaDiel==='b'?'X':'')+'</td></tr>'+
+  '<tr><td>c) Resistenza di isolamento U=500V, R&gt;= 1000 Ω/V (Possibile per In &lt;= 250A)</td><td style="text-align:center;">'+(d.provaDiel==='c'?'X':'')+'</td></tr>'+
+  '</table>'+
+  '<p style="font-size:8pt;margin:6px 0;">Le prove di cui agli articoli 10.5.2 (Continuità del conduttore di protezione), 10.9 (Proprietà dielettriche) sono state effettuate mediante strumento di misura.</p>'+
+  '<div class="result-text">Il quadro in oggetto, avendo superato le prove sopra elencate, risulta conforme alle<br>Norma CEI EN 61439-1 e CEI EN 61439-2</div>'+
+  footer(d,'IL RESPONSABILE TECNICO')+
+  '</div>';
+}
+function genPage4(d){
+  var rifLines=(d.riferimento||'').split('\n').map(function(l){return l.trim()}).filter(function(l){return l}).join(' ');
+  var X=function(cond){return cond?'X':''};
+  return'<div class="page">'+spacer()+
+  '<div style="text-align:center;font-weight:bold;font-style:italic;font-size:15pt;margin:8px 0 12px;">DATI TECNICI DEL QUADRO</div>'+
+  '<table class="p4-table" style="margin-bottom:12px;">'+
+  '<tr><td class="lbl" style="width:140px;">N. Matricola: '+d.matricola+'</td><td colspan="3"><strong>Denominazione Quadro Elettrico:</strong> '+(d.denominazione||'')+'</td></tr>'+
+  '<tr><td class="lbl">Riferimento:</td><td colspan="3">'+rifLines+'</td></tr>'+
+  '<tr><td class="lbl">Cablatore del Quadro:</td><td colspan="3">Elettromeccanica Marino - Via Col Dei Pioppi, 14 - 63074 S. Benedetto del Tr. (Ap)</td></tr>'+
+  '<tr><td class="lbl">Committente:</td><td colspan="3">'+d.committente+(d.indirizzoCommittente?' - '+d.indirizzoCommittente:'')+'</td></tr>'+
+  '</table>'+
+  '<table class="p4-table" style="width:auto;margin-bottom:5px;">'+
+  '<tr><td class="lbl" style="width:230px;">Tensione di Funzionamento:</td><td style="width:90px;text-align:center;">'+d.tensioneNom+'V</td></tr>'+
+  '<tr><td class="lbl">Tensione di Isolamento:</td><td style="text-align:center;">'+d.tensioneIsol+'V</td></tr>'+
+  '<tr><td class="lbl">Frequenza Nominale:</td><td style="text-align:center;">'+d.frequenza+'Hz</td></tr>'+
+  '<tr><td class="lbl">Corrente Nominale:</td><td style="text-align:center;">'+d.correnteNom+'A</td></tr>'+
+  '</table>'+
+  '<div class="section-box">Caratteristiche Costruttive</div>'+
+  '<div class="construct-row"><span class="construct-label">Installazione:</span>'+
+  '<span class="construct-option">All\' interno <span class="box">'+X(d.installazione==='interno')+'</span></span>'+
+  '<span class="construct-option">All\' esterno <span class="box">'+X(d.installazione==='esterno')+'</span></span>'+
+  '<span class="construct-option">Altro <span style="border-bottom:1px solid #000;min-width:120px;display:inline-block;padding:0 5px;">'+(d.installazione==='altro'?d.instAltroText:'')+'</span></span></div>'+
+  '<div class="construct-row"><span class="construct-label">Accessibilità:</span>'+
+  '<span class="construct-option">Fronte <span class="box">'+X(d.accFronte)+'</span></span>'+
+  '<span class="construct-option">Retro <span class="box">'+X(d.accRetro)+'</span></span>'+
+  '<span class="construct-option">Fronte + Fianchi <span class="box">'+X(d.accFronteFianchi)+'</span></span>'+
+  '<span class="construct-option">Totale <span class="box">'+X(d.accTotale)+'</span></span></div>'+
+  '<div class="dimension-row"><span class="construct-label">Dimensioni mm. (LxHxP):</span>'+
+  '<div class="dim-group"><span class="dim-label">L</span><span class="dim-value">'+d.dimL+'</span></div>'+
+  '<div class="dim-group"><span class="dim-label">H</span><span class="dim-value">'+d.dimH+'</span></div>'+
+  '<div class="dim-group"><span class="dim-label">P</span><span class="dim-value">'+d.dimP+'</span></div></div>'+
+  '<div class="protection-row"><span class="construct-label">Grado di Protezione:</span>'+
+  '<span class="carp-value">'+d.gradoProtezione+'</span>'+
+  '<span style="margin-left:20px;">Colonne composto l\' armadio</span>'+
+  '<span class="box" style="border:1.5pt solid #000;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:10pt;">'+d.numColonne+'</span></div>'+
+  '<div class="carp-row"><span class="construct-label">Carpenteria:</span><span class="carp-value">'+d.carpMarca+'</span><span class="carp-value">'+d.carpMateriale+'</span></div>'+
+  '<div class="section-box">Cablaggio</div>'+
+  '<div class="construct-row"><span class="construct-label">Morsettiere Utenze:</span>'+
+  '<span class="construct-option">In Alto <span class="box">'+X(d.morsAlto)+'</span></span>'+
+  '<span class="construct-option">In Basso <span class="box">'+X(d.morsBasso)+'</span></span>'+
+  '<span class="construct-option" style="margin-left:10px;">Vano Cavi</span>'+
+  '<span class="construct-option">Sx <span class="box">'+X(d.morsVanoSx)+'</span></span>'+
+  '<span class="construct-option">Cle <span class="box">'+X(d.morsVanoCle)+'</span></span>'+
+  '<span class="construct-option">Dx <span class="box">'+X(d.morsVanoDx)+'</span></span></div>'+
+  '<div class="construct-row" style="margin-top:12px;"><span class="construct-label">Alim. Interruttore<br>Generale:</span>'+
+  '<div style="display:flex;flex-direction:column;gap:4px;">'+
+  '<span class="construct-option">Diretto Ant. <span class="box">'+X(d.alimGen==='direttoAnt')+'</span></span>'+
+  '<span class="construct-option">Diretto Post. <span class="box">'+X(d.alimGen==='direttoPost')+'</span></span></div>'+
+  '<div style="display:flex;flex-direction:column;gap:4px;margin-left:15px;">'+
+  '<span class="construct-option">Da Morsetti <span class="box">'+X(d.alimGen==='morsetti')+'</span></span>'+
+  '<span class="construct-option">Da Pettini <span class="box">'+X(d.alimGen==='pettini')+'</span></span></div>'+
+  '<div style="margin-left:20px;"><span class="construct-option">Collegamento Prefabbricato <span class="box">'+X(d.collPrefab)+'</span></span></div></div>'+
+  footer(d,'IL LEGALE RAPPRESENTANTE')+
+  '</div>';
+}
+
+/* ===== PREVIEW / PRINT ===== */
+function generatePreview(){
+  var d=getData();
+  G('previewContainer').innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
+  G('previewContainer').scrollIntoView({behavior:'smooth'});
+  notify('Anteprima 4 pagine generata');
+}
+function printCert(){
+  var d=getData();
+  var c=G('previewContainer');
+  if(!c.innerHTML.trim())c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
+  setTimeout(function(){window.print()},300);
+}
+
+/* ===== SALVA ===== */
+function saveCert(){
+  var d=getData();
+  if(!d.matricola){notify('Inserisci la matricola quadro','error');return;}
+  if(!_progr)_progr=nextProgr();
+  d.progressivo=_progr;
+  if(!_certKey)_certKey='cert_'+d.matricola.replace(/\//g,'-')+'_'+Date.now();
+  d.label=d.matricola+' — '+d.committente;
+  var regId='reg_'+_certKey;
+  var regEntry={id:regId,certKey:_certKey,progressivo:_progr.num,anno:_progr.year,
+    matricola:d.matricola,denominazione:d.denominazione,riferimento:d.riferimento,
+    committente:d.committente,data:d.data};
+  Promise.all([apiPut('/api/certs/'+_certKey,d),apiPut('/api/registro/'+regId,regEntry)])
+    .then(function(){
+      _certs[_certKey]=d;_registro[regId]=regEntry;
+      loadCertList();refreshBadge();
+      notify('Salvato — N° '+fmtP(_progr.num,_progr.year));
+    }).catch(function(){notify('Errore salvataggio','error');});
+}
+
+/* ===== ARCHIVIO ===== */
+function loadCertList(){
+  var list=G('certList');
+  var keys=Object.keys(_certs).sort(function(a,b){return b.localeCompare(a)});
+  if(!keys.length){list.innerHTML='<li style="color:#999;text-align:center;justify-content:center;padding:20px;">Nessun certificato salvato</li>';return;}
+  list.innerHTML=keys.map(function(k){
+    var c=_certs[k],ps=c.progressivo?(' [N° '+fmtP(c.progressivo.num,c.progressivo.year)+']'):'';
+    return'<li><div><div class="cert-info">'+(c.label||k)+ps+'</div><div class="cert-meta">Salvato: '+(c.savedAt||'—')+'</div></div>'+
+    '<div class="cert-actions"><button class="btn-load" onclick="loadCert(\''+k+'\')">Carica</button><button class="btn-delete" onclick="deleteCert(\''+k+'\')">Elimina</button></div></li>';
+  }).join('');
+}
+function loadCert(key){
+  var c=_certs[key];if(!c)return;
+  ['matricola','annoMarcatura','committente','indirizzoCommittente','denominazione','riferimento',
+   'tensioneNom','correnteNom','tensioneIsol','frequenza','dimL','dimH','dimP','carpMarca','instAltroText']
+    .forEach(function(f){if(G(f))G(f).value=c[f]||''});
+  G('dataCert').value=c.dataRaw||'';
+  G('gradoProtezione').value=c.gradoProtezione||'IP65';
+  G('numColonne').value=c.numColonne||'1';
+  G('carpMateriale').value=c.carpMateriale||'Metallo';
+  var ir=document.querySelector('input[name="installazione"][value="'+c.installazione+'"]');if(ir)ir.checked=true;
+  G('accFronte').checked=!!c.accFronte;G('accRetro').checked=!!c.accRetro;
+  G('accFronteFianchi').checked=!!c.accFronteFianchi;G('accTotale').checked=!!c.accTotale;
+  if(c.prove)for(var i=0;i<8;i++)G('prova'+(i+1)).checked=c.prove[i];
+  var dr=document.querySelector('input[name="provaDiel"][value="'+c.provaDiel+'"]');if(dr)dr.checked=true;
+  ['morsAlto','morsBasso','morsVanoSx','morsVanoCle','morsVanoDx','collPrefab'].forEach(function(f){G(f).checked=!!c[f]});
+  var ar=document.querySelector('input[name="alimGen"][value="'+c.alimGen+'"]');if(ar)ar.checked=true;
+  _progr=c.progressivo||null;_certKey=key;
+  _matEdited=true;switchTabById('tab-dati');refreshBadge();notify('Certificato caricato');
+}
+function deleteCert(key){
+  if(!confirm('Eliminare questo certificato?'))return;
+  var regId='reg_'+key;
+  Promise.all([apiDel('/api/certs/'+key),apiDel('/api/registro/'+regId)])
+    .then(function(){
+      delete _certs[key];delete _registro[regId];
+      if(_certKey===key){_progr=null;_certKey=null;refreshBadge();}
+      loadCertList();notify('Eliminato','warn');
+    });
+}
+
+/* ===== RESET ===== */
+function resetForm(){
+  if(!confirm('Resettare tutti i campi?'))return;
+  ['matricola','committente','indirizzoCommittente','denominazione','riferimento','dimL','dimH','dimP','carpMarca','instAltroText']
+    .forEach(function(f){G(f).value=''});
+  G('dataCert').value=new Date().toISOString().split('T')[0];
+  G('annoMarcatura').value=new Date().getFullYear();
+  G('tensioneNom').value='400';G('correnteNom').value='';G('tensioneIsol').value='500';G('frequenza').value='50';
+  G('gradoProtezione').value='IP65';G('numColonne').value='1';G('carpMateriale').value='Metallo';
+  G('instInterno').checked=true;G('accFronte').checked=true;
+  ['accRetro','accFronteFianchi','accTotale','morsAlto','morsBasso','morsVanoSx','morsVanoCle','morsVanoDx','collPrefab']
+    .forEach(function(f){G(f).checked=false});
+  for(var i=1;i<=8;i++)G('prova'+i).checked=true;
+  G('dielA').checked=false;G('dielB').checked=false;G('dielC').checked=false;G('alimDirettoAnt').checked=true;
+  G('previewContainer').innerHTML='';_progr=null;_certKey=null;_matEdited=false;G('matricola').value='';refreshBadge();
+}
+</script>
+</body>
+</html>
