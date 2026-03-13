@@ -1,6 +1,6 @@
 'use strict';
 const express = require('express');
-const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
@@ -25,16 +25,11 @@ db.exec(`
 // — middleware —
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'em-marino-secret-2026',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 } // 7 giorni
-}));
+app.use(cookieParser(process.env.SESSION_SECRET || 'em-marino-secret-2026'));
 
-// — auth middleware —
+// auth middleware basato su cookie firmato
 function requireAuth(req, res, next) {
-  if (req.session && req.session.auth) return next();
+  if (req.signedCookies && req.signedCookies.auth === 'ok') return next();
   res.status(401).json({ error: 'Non autenticato' });
 }
 
@@ -42,18 +37,23 @@ function requireAuth(req, res, next) {
 app.post('/api/login', (req, res) => {
   const { password } = req.body;
   if (password === APP_PASSWORD) {
-    req.session.auth = true;
+    res.cookie('auth', 'ok', {
+      signed: true,
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: 'lax'
+    });
     res.json({ ok: true });
   } else {
     res.status(401).json({ error: 'Password errata' });
   }
 });
 app.post('/api/logout', (req, res) => {
-  req.session.destroy();
+  res.clearCookie('auth');
   res.json({ ok: true });
 });
 app.get('/api/me', (req, res) => {
-  res.json({ auth: !!(req.session && req.session.auth) });
+  res.json({ auth: !!(req.signedCookies && req.signedCookies.auth === 'ok') });
 });
 
 // — CERTIFICATI —
