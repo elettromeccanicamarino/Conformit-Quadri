@@ -137,4 +137,4 @@ app.post('/api/import', requireAuth, (req, res) => {
 // — fallback SPA —
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-app.listen(PORT, () => console.log(`Marino App avviata su http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Marino App avviata su http://localhost:${PORT}`));
