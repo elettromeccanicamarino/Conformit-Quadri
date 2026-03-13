@@ -1,13 +1,9 @@
 {
   "name": "marino-certificati",
   "version": "1.0.0",
-  "description": "Certificati di Conformità — Elettromeccanica Marino",
   "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
+  "scripts": { "start": "node server.js" },
   "dependencies": {
-    "better-sqlite3": "^9.4.3",
     "cookie-parser": "^1.4.6",
     "express": "^4.18.3"
   }
