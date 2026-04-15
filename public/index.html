@@ -214,7 +214,15 @@
         <div class="form-group"><label>CAP</label><input type="text" id="cfg_cap" placeholder="Es. 63074"></div>
         <div class="form-group"><label>Città</label><input type="text" id="cfg_citta" placeholder="Es. S. Benedetto del Tr."></div>
         <div class="form-group"><label>Provincia</label><input type="text" id="cfg_provincia" placeholder="Es. Ap" maxlength="5"></div>
-        <div class="form-group"><label>Sigla Logo (2-3 lettere)</label><input type="text" id="cfg_logoLetters" placeholder="Es. EM" maxlength="3"></div>
+        <div class="form-group"><label>Sigla cerchio app (2-3 lettere)</label><input type="text" id="cfg_logoLetters" placeholder="Es. EM" maxlength="3"></div>
+        <div class="form-group full-width">
+          <label>Logo per i certificati (opzionale — JPG, PNG max 500KB)</label>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px;">
+            <img id="cfg_logoPreviewModal" src="" alt="" style="max-height:56px;max-width:180px;display:none;border:1px solid #ddd;border-radius:6px;padding:4px;">
+            <button type="button" class="btn" style="background:#1565c0;color:#fff;" onclick="G('cfg_logoFileModal').click()">📁 Carica Logo</button>
+            <input type="file" id="cfg_logoFileModal" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" style="display:none" onchange="previewLogoModal(this)">
+          </div>
+        </div>
       </div>
     </div>
     <div style="padding:16px 20px;border-top:1px solid #e0e0e0;flex-shrink:0;">
@@ -424,9 +432,21 @@
         <div class="form-group"><label>CAP</label><input type="text" id="cfg_cap" placeholder="Es. 63074"></div>
         <div class="form-group"><label>Città</label><input type="text" id="cfg_citta" placeholder="Es. S. Benedetto del Tr."></div>
         <div class="form-group"><label>Provincia</label><input type="text" id="cfg_provincia" placeholder="Es. Ap" maxlength="5"></div>
-        <div class="form-group"><label>Sigla Logo (2-3 lettere)</label><input type="text" id="cfg_logoLetters" placeholder="Es. EM" maxlength="3"></div>
+        <div class="form-group"><label>Sigla cerchio app (2-3 lettere)</label><input type="text" id="cfg_logoLetters" placeholder="Es. EM" maxlength="3"></div>
+        <div class="form-group full-width">
+          <label>Logo per i certificati (JPG, PNG — max 500KB)</label>
+          <p style="font-size:12px;color:#777;margin:2px 0 8px;">Se caricato appare in cima ad ogni pagina del certificato. Se vuoto, resta lo spazio per la carta intestata pre-stampata.</p>
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <img id="cfg_logoPreview" src="" alt="Logo" style="max-height:64px;max-width:220px;display:none;border:1px solid #ddd;border-radius:6px;padding:4px;background:#fafafa;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn" style="background:#1565c0;color:#fff;" onclick="G('cfg_logoFile').click()">📁 Carica Logo</button>
+              <button type="button" id="btnRemoveLogo" class="btn" style="background:#c62828;color:#fff;display:none;" onclick="removeLogo()">✕ Rimuovi Logo</button>
+            </div>
+            <input type="file" id="cfg_logoFile" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" style="display:none" onchange="previewLogo(this)">
+          </div>
+        </div>
       </div>
-      <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+      <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
         <button class="btn btn-success" onclick="saveConfig(false)">💾 Salva Impostazioni</button>
         <button id="btnResetDemo" class="btn" style="background:#e65100;color:#fff;display:none;" onclick="resetConfig()">🔄 Reimposta configurazione</button>
       </div>
@@ -453,7 +473,7 @@
 var acIndex=-1,_progr=null,_certKey=null,_matEdited=false;
 var _clients={},_certs={},_registro={};
 var _accountType='main';
-var _config={ragioneSociale:'Elettromeccanica Marino',indirizzo:'Via Col Dei pioppi, 14',cap:'63074',citta:'S. Benedetto del Tr.',provincia:'Ap',logoLetters:'EM'};
+var _config={ragioneSociale:'Elettromeccanica Marino',indirizzo:'Via Col Dei pioppi, 14',cap:'63074',citta:'S. Benedetto del Tr.',provincia:'Ap',logoLetters:'EM',logo:''};
 
 function G(id){return document.getElementById(id)}
 function notify(msg,type){
@@ -510,6 +530,10 @@ function applyConfig(){
     var el=G('cfg_'+f);if(el&&!el.dataset.dirty)el.value=_config[f]||'';
   });
   if(G('btnResetDemo'))G('btnResetDemo').style.display=_accountType==='demo'?'':'none';
+  if(_config.logo){
+    if(G('cfg_logoPreview')){G('cfg_logoPreview').src=_config.logo;G('cfg_logoPreview').style.display='';}
+    if(G('btnRemoveLogo'))G('btnRemoveLogo').style.display='';
+  }
 }
 function saveConfig(closeModal){
   var c={
@@ -518,7 +542,8 @@ function saveConfig(closeModal){
     cap:(G('cfg_cap').value||'').trim(),
     citta:(G('cfg_citta').value||'').trim(),
     provincia:(G('cfg_provincia').value||'').trim(),
-    logoLetters:(G('cfg_logoLetters').value||'').trim()
+    logoLetters:(G('cfg_logoLetters').value||'').trim(),
+    logo:_config.logo||''
   };
   if(!c.ragioneSociale){notify('Inserisci la ragione sociale','error');return;}
   apiPut('/api/config',c).then(function(){
@@ -527,6 +552,32 @@ function saveConfig(closeModal){
     if(closeModal)closeFirstRunModal();
     notify('Impostazioni azienda salvate ✓');
   }).catch(function(){notify('Errore salvataggio','error');});
+}
+function previewLogo(input){
+  var file=input.files[0];if(!file)return;
+  if(file.size>500*1024){notify('Logo troppo grande — max 500KB','error');input.value='';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    _config.logo=e.target.result;
+    G('cfg_logoPreview').src=e.target.result;G('cfg_logoPreview').style.display='';
+    G('btnRemoveLogo').style.display='';
+  };
+  reader.readAsDataURL(file);
+}
+function previewLogoModal(input){
+  var file=input.files[0];if(!file)return;
+  if(file.size>500*1024){notify('Logo troppo grande — max 500KB','error');input.value='';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    _config.logo=e.target.result;
+    G('cfg_logoPreviewModal').src=e.target.result;G('cfg_logoPreviewModal').style.display='';
+  };
+  reader.readAsDataURL(file);
+}
+function removeLogo(){
+  _config.logo='';
+  G('cfg_logoPreview').src='';G('cfg_logoPreview').style.display='none';
+  G('btnRemoveLogo').style.display='none';
 }
 function showFirstRunModal(){G('firstRunOverlay').classList.add('open');}
 function closeFirstRunModal(){G('firstRunOverlay').classList.remove('open');}
@@ -760,7 +811,10 @@ function getData(){
 }
 
 /* ===== HTML HELPERS ===== */
-function spacer(){return'<div class="letterhead-spacer"></div>'}
+function spacer(){
+  if(_config.logo)return'<div class="letterhead-spacer" style="display:flex;align-items:center;padding:2mm 0;"><img src="'+_config.logo+'" style="max-height:34mm;max-width:180mm;object-fit:contain;"></div>';
+  return'<div class="letterhead-spacer"></div>';
+}
 function infoBoxes(d){
   var rif=d.denominazione||'';
   if(d.riferimento){var lines=d.riferimento.split('\n').map(function(l){return l.trim()}).filter(function(l){return l});if(rif&&lines.length)rif+='<br>';rif+=lines.join('<br>')}
