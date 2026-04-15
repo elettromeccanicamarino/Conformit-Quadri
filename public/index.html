@@ -516,7 +516,7 @@ function fmtP(num,year){return String(num).padStart(3,'0')+'/'+year}
 function refreshBadge(){
   var p=_progr||nextProgr();
   G('progrPreview').textContent=fmtP(p.num,p.year);
-  if(!_matEdited&&!_progr)G('matricola').value=fmtP(p.num,p.year);
+  if(!_matEdited&&!_progr){var nm=nextMatricola();G('matricola').value=nm!==null?nm:fmtP(p.num,p.year);}
 }
 
 /* ===== REGISTRO ===== */
