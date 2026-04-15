@@ -254,6 +254,7 @@
     <button class="tab-btn" onclick="switchTab(this,'tab-tecnici')">⚡ Dati Tecnici</button>
     <button class="tab-btn" onclick="switchTab(this,'tab-costruttivi')">📐 Caratteristiche</button>
     <button class="tab-btn" onclick="switchTab(this,'tab-cablaggio')">🔌 Cablaggio</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-allegati')">📎 Allegati</button>
     <button class="tab-btn" onclick="switchTab(this,'tab-clienti')">👥 Rubrica Clienti</button>
     <button class="tab-btn" onclick="switchTab(this,'tab-archivio')">💾 Archivio</button>
     <button class="tab-btn" onclick="switchTab(this,'tab-impostazioni')">⚙️ Impostazioni</button>
@@ -407,6 +408,27 @@
     </div>
   </div>
 
+  <div class="tab-content" id="tab-allegati">
+    <div class="form-section">
+      <h2><span class="icon">📷</span> Foto del Quadro</h2>
+      <p style="color:#555;font-size:13px;margin:0 0 12px;">Carica fino a 8 foto (JPG, PNG — max 3MB cad.). Vengono salvate insieme al certificato.</p>
+      <div id="fotoGrid" style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px;min-height:10px;"></div>
+      <button type="button" class="btn" style="background:#1565c0;color:#fff;" onclick="G('fotoInput').click()">📷 Aggiungi Foto</button>
+      <input type="file" id="fotoInput" accept="image/*" multiple style="display:none" onchange="addFoto(this)">
+    </div>
+    <div class="form-section">
+      <h2><span class="icon">📐</span> Schema Elettrico</h2>
+      <p style="color:#555;font-size:13px;margin:0 0 12px;">Carica lo schema definitivo (PDF, JPG, PNG — max 10MB).</p>
+      <div id="schemaInfo" style="display:none;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button type="button" class="btn" style="background:#1565c0;color:#fff;" onclick="G('schemaInput').click()">📐 Carica Schema</button>
+        <button type="button" id="btnOpenSchema" class="btn" style="background:#2e7d32;color:#fff;display:none;" onclick="openSchema()">👁 Apri / Scarica</button>
+        <button type="button" id="btnRemoveSchema" class="btn btn-danger" style="display:none;" onclick="removeSchema()">✕ Rimuovi</button>
+      </div>
+      <input type="file" id="schemaInput" accept="image/*,application/pdf" style="display:none" onchange="setSchema(this)">
+    </div>
+  </div>
+
   <div class="tab-content" id="tab-clienti">
     <div class="form-section">
       <h2><span class="icon">👥</span> Rubrica Clienti</h2>
@@ -473,6 +495,7 @@
 var acIndex=-1,_progr=null,_certKey=null,_matEdited=false;
 var _clients={},_certs={},_registro={};
 var _accountType='main';
+var _allegati={foto:[],schema:null};
 var _config={ragioneSociale:'Elettromeccanica Marino',indirizzo:'Via Col Dei pioppi, 14',cap:'63074',citta:'S. Benedetto del Tr.',provincia:'Ap',logoLetters:'EM',logo:''};
 
 function G(id){return document.getElementById(id)}
@@ -625,7 +648,7 @@ function switchTabById(tabId){
   document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});
   document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
   G(tabId).classList.add('active');
-  var order=['tab-dati','tab-tecnici','tab-costruttivi','tab-cablaggio','tab-clienti','tab-archivio','tab-impostazioni'];
+  var order=['tab-dati','tab-tecnici','tab-costruttivi','tab-cablaggio','tab-allegati','tab-clienti','tab-archivio','tab-impostazioni'];
   var btns=document.querySelectorAll('.tab-btn');
   var idx=order.indexOf(tabId);if(idx>=0&&btns[idx])btns[idx].classList.add('active');
 }
@@ -806,7 +829,8 @@ function getData(){
     morsVanoSx:G('morsVanoSx').checked,morsVanoCle:G('morsVanoCle').checked,morsVanoDx:G('morsVanoDx').checked,
     alimGen:(document.querySelector('input[name="alimGen"]:checked')||{}).value||'direttoAnt',
     collPrefab:G('collPrefab').checked,
-    progressivo:_progr
+    progressivo:_progr,
+    allegati:{foto:_allegati.foto,schema:_allegati.schema}
   };
 }
 
@@ -1021,6 +1045,8 @@ function loadCertList(){
   if(!keys.length){list.innerHTML='<li style="color:#999;text-align:center;justify-content:center;padding:20px;">Nessun certificato salvato</li>';return;}
   list.innerHTML=keys.map(function(k){
     var c=_certs[k],ps=c.progressivo?(' [N° '+fmtP(c.progressivo.num,c.progressivo.year)+']'):'';
+    var al=c.allegati,hasFoto=al&&al.foto&&al.foto.length,hasSchema=al&&al.schema;
+    if(hasFoto||hasSchema)ps+=' 📎'+(hasFoto?' '+al.foto.length+'📷':'')+(hasSchema?' 📐':'');
     return'<li><div><div class="cert-info">'+(c.label||k)+ps+'</div><div class="cert-meta">Salvato: '+(c.savedAt||'—')+'</div></div>'+
     '<div class="cert-actions"><button class="btn-load" onclick="loadCert(\''+k+'\')">Carica</button><button style="background:#0277bd;color:#fff" onclick="duplicateCert(\''+k+'\')">⧉ Duplica</button><button class="btn-delete" onclick="deleteCert(\''+k+'\')">Elimina</button></div></li>';
   }).join('');
@@ -1042,6 +1068,8 @@ function loadCert(key){
   ['morsAlto','morsBasso','morsVanoSx','morsVanoCle','morsVanoDx','collPrefab'].forEach(function(f){G(f).checked=!!c[f]});
   var ar=document.querySelector('input[name="alimGen"][value="'+c.alimGen+'"]');if(ar)ar.checked=true;
   _progr=c.progressivo||null;_certKey=key;
+  _allegati=c.allegati?{foto:c.allegati.foto||[],schema:c.allegati.schema||null}:{foto:[],schema:null};
+  renderFotoGrid();renderSchemaInfo();
   _matEdited=true;switchTabById('tab-dati');refreshBadge();notify('Certificato caricato');
 }
 function duplicateCert(key){
@@ -1068,6 +1096,60 @@ function duplicateCert(key){
   switchTabById('tab-dati');
   notify('Duplicato — matricola: '+(nextMat||G('matricola').value)+' — modifica se necessario e salva');
 }
+/* ===== ALLEGATI ===== */
+function addFoto(input){
+  var files=Array.from(input.files);
+  if(_allegati.foto.length+files.length>8){notify('Massimo 8 foto','error');input.value='';return;}
+  files.forEach(function(file){
+    if(file.size>3*1024*1024){notify(file.name+': max 3MB','error');return;}
+    var reader=new FileReader();
+    reader.onload=function(e){_allegati.foto.push({name:file.name,data:e.target.result,type:file.type});renderFotoGrid();};
+    reader.readAsDataURL(file);
+  });
+  input.value='';
+}
+function removeFoto(idx){_allegati.foto.splice(idx,1);renderFotoGrid();}
+function renderFotoGrid(){
+  var grid=G('fotoGrid');if(!grid)return;
+  if(!_allegati.foto.length){grid.innerHTML='';return;}
+  grid.innerHTML=_allegati.foto.map(function(f,i){
+    return'<div style="position:relative;display:inline-block;text-align:center;">'+
+      '<img src="'+f.data+'" style="height:110px;width:110px;object-fit:cover;border-radius:8px;border:1px solid #ddd;display:block;">'+
+      '<button onclick="removeFoto('+i+')" style="position:absolute;top:3px;right:3px;background:rgba(198,40,40,.9);color:#fff;border:none;border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:11px;line-height:1;padding:0;">✕</button>'+
+      '<div style="font-size:10px;margin-top:3px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#555;">'+f.name+'</div>'+
+    '</div>';
+  }).join('');
+}
+function setSchema(input){
+  var file=input.files[0];if(!file)return;
+  if(file.size>10*1024*1024){notify('Schema troppo grande (max 10MB)','error');input.value='';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){_allegati.schema={name:file.name,data:e.target.result,type:file.type};renderSchemaInfo();};
+  reader.readAsDataURL(file);input.value='';
+}
+function removeSchema(){_allegati.schema=null;renderSchemaInfo();}
+function renderSchemaInfo(){
+  var info=G('schemaInfo');if(!info)return;
+  if(!_allegati.schema){info.style.display='none';G('btnOpenSchema').style.display='none';G('btnRemoveSchema').style.display='none';return;}
+  var isPdf=_allegati.schema.type==='application/pdf';
+  info.style.display='';
+  info.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f5f5f5;border-radius:8px;border:1px solid #e0e0e0;">'+
+    '<span style="font-size:26px;">'+(isPdf?'📄':'🖼️')+'</span>'+
+    '<div style="font-weight:600;font-size:14px;">'+_allegati.schema.name+'</div>'+
+  '</div>';
+  G('btnOpenSchema').style.display='';G('btnRemoveSchema').style.display='';
+}
+function openSchema(){
+  if(!_allegati.schema)return;
+  var w=window.open('','_blank');
+  if(_allegati.schema.type==='application/pdf'){
+    w.document.write('<html><body style="margin:0"><iframe src="'+_allegati.schema.data+'" style="width:100%;height:100vh;border:none;"></iframe></body></html>');
+  }else{
+    w.document.write('<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="'+_allegati.schema.data+'" style="max-width:100%;max-height:100vh;"></body></html>');
+  }
+  w.document.close();
+}
+
 function deleteCert(key){
   if(!confirm('Eliminare questo certificato?'))return;
   var regId='reg_'+key;
@@ -1093,7 +1175,8 @@ function resetForm(){
     .forEach(function(f){G(f).checked=false});
   for(var i=1;i<=8;i++)G('prova'+i).checked=true;
   G('dielA').checked=false;G('dielB').checked=false;G('dielC').checked=false;G('alimDirettoAnt').checked=true;
-  G('previewContainer').innerHTML='';_progr=null;_certKey=null;_matEdited=false;G('matricola').value='';refreshBadge();
+  G('previewContainer').innerHTML='';_progr=null;_certKey=null;_matEdited=false;G('matricola').value='';
+  _allegati={foto:[],schema:null};renderFotoGrid();renderSchemaInfo();refreshBadge();
 }
 </script>
 </body>
