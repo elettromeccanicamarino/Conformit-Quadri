@@ -499,7 +499,8 @@ function switchTabById(tabId){
 function nextMatricola(){
   var mats=Object.values(_certs).map(function(c){return(c.matricola||'').trim()}).filter(Boolean);
   var parsed=[];
-  mats.forEach(function(m){var match=m.match(/^(.+\/)(\d+)$/);if(match)parsed.push({prefix:match[1],num:parseInt(match[2],10)});});
+  // Solo formato LETTERA/NUMERO (es. B/147) — esclude 048/2026 che inizia con cifra
+  mats.forEach(function(m){var match=m.match(/^([A-Za-z][^\/]*\/)(\d+)$/);if(match)parsed.push({prefix:match[1],num:parseInt(match[2],10)});});
   if(!parsed.length)return null;
   parsed.sort(function(a,b){return b.num-a.num;});
   return parsed[0].prefix+(parsed[0].num+1);
