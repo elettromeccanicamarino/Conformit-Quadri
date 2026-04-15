@@ -495,6 +495,16 @@ function switchTabById(tabId){
   var idx=order.indexOf(tabId);if(idx>=0&&btns[idx])btns[idx].classList.add('active');
 }
 
+/* ===== MATRICOLA PROGRESSIVA ===== */
+function nextMatricola(){
+  var mats=Object.values(_certs).map(function(c){return(c.matricola||'').trim()}).filter(Boolean);
+  var parsed=[];
+  mats.forEach(function(m){var match=m.match(/^(.+\/)(\d+)$/);if(match)parsed.push({prefix:match[1],num:parseInt(match[2],10)});});
+  if(!parsed.length)return null;
+  parsed.sort(function(a,b){return b.num-a.num;});
+  return parsed[0].prefix+(parsed[0].num+1);
+}
+
 /* ===== PROGRESSIVO ===== */
 function nextProgr(){
   var year=new Date().getFullYear();
@@ -904,12 +914,13 @@ function duplicateCert(key){
   var dr=document.querySelector('input[name="provaDiel"][value="'+c.provaDiel+'"]');if(dr)dr.checked=true;
   ['morsAlto','morsBasso','morsVanoSx','morsVanoCle','morsVanoDx','collPrefab'].forEach(function(f){G(f).checked=!!c[f]});
   var ar=document.querySelector('input[name="alimGen"][value="'+c.alimGen+'"]');if(ar)ar.checked=true;
-  _progr=null;_certKey=null;_matEdited=false;
-  G('matricola').value='';
+  _progr=null;_certKey=null;
+  var nextMat=nextMatricola();
+  if(nextMat){G('matricola').value=nextMat;_matEdited=true;}
+  else{G('matricola').value='';_matEdited=false;refreshBadge();}
   G('previewContainer').innerHTML='';
-  refreshBadge();
   switchTabById('tab-dati');
-  notify('Duplicato — matricola aggiornata, salva come nuovo certificato');
+  notify('Duplicato — matricola: '+(nextMat||G('matricola').value)+' — modifica se necessario e salva');
 }
 function deleteCert(key){
   if(!confirm('Eliminare questo certificato?'))return;
