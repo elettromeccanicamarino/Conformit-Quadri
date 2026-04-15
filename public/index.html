@@ -190,6 +190,19 @@
   </div>
 </div>
 
+<!-- SCHERMATA PRIMO ACCESSO (via link con token) -->
+<div class="login-screen" id="setupScreen">
+  <div class="login-box">
+    <div class="login-logo">🔑</div>
+    <h2>Benvenuto!</h2>
+    <p id="setupWelcomeMsg">Scegli la tua password per iniziare.</p>
+    <input type="password" id="setupPwd1" placeholder="Scegli una password" onkeydown="if(event.key==='Enter')doSetup()">
+    <input type="password" id="setupPwd2" placeholder="Ripeti la password" onkeydown="if(event.key==='Enter')doSetup()" style="margin-top:4px;">
+    <button class="login-btn" onclick="doSetup()" style="margin-top:10px;">✅ Crea Password e Accedi</button>
+    <div class="login-error" id="setupError"></div>
+  </div>
+</div>
+
 <div class="app-header">
   <div class="logo-circle" id="logoCircle">EM</div>
   <div>
@@ -494,10 +507,9 @@
         <h2><span class="icon">👥</span> Account Clienti</h2>
         <p style="color:#555;font-size:13px;margin:0 0 16px;">Crea una password per ogni cliente. Ogni cliente vede solo i suoi dati e non può creare account.</p>
         <div class="form-grid" style="max-width:600px;">
-          <div class="form-group"><label>Nome Cliente / Azienda</label><input type="text" id="newClientName" placeholder="Es. Rossi Impianti"></div>
-          <div class="form-group"><label>Password</label><input type="text" id="newClientPwd" placeholder="Es. rossi2026" autocomplete="new-password"></div>
+            <div class="form-group"><label>Nome Cliente / Azienda</label><input type="text" id="newClientName" placeholder="Es. Rossi Impianti" style="width:100%"></div>
         </div>
-        <button class="btn btn-success" onclick="createAccount()">➕ Crea Account</button>
+        <button class="btn btn-success" onclick="createAccount()" style="margin-top:8px;">🔗 Genera Link di Accesso</button>
         <div id="accountsList" style="margin-top:20px;display:flex;flex-direction:column;gap:8px;"></div>
       </div>
     </div>
@@ -523,6 +535,7 @@
 var acIndex=-1,_progr=null,_certKey=null,_matEdited=false;
 var _clients={},_certs={},_registro={};
 var _accountType='main';
+var _setupToken=new URLSearchParams(window.location.search).get('token');
 var _allegati={foto:[],schema:null};
 var _config={ragioneSociale:'Elettromeccanica Marino',indirizzo:'Via Col Dei pioppi, 14',cap:'63074',citta:'S. Benedetto del Tr.',provincia:'Ap',logoLetters:'EM',logo:''};
 
@@ -548,6 +561,21 @@ function doLogout(){
     G('loginScreen').classList.add('show');
     G('loginPwd').value='';G('loginError').textContent='';
   });
+}
+function doSetup(){
+  var p1=G('setupPwd1').value,p2=G('setupPwd2').value;
+  if(!p1){G('setupError').textContent='Inserisci una password';return;}
+  if(p1!==p2){G('setupError').textContent='Le password non coincidono';return;}
+  if(p1.length<6){G('setupError').textContent='Password troppo corta (minimo 6 caratteri)';return;}
+  fetch('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_setupToken,password:p1})})
+    .then(function(r){return r.json()}).then(function(d){
+      if(d.ok){
+        G('setupScreen').classList.remove('show');
+        history.replaceState(null,'',window.location.pathname);
+        _accountType='client';
+        initApp();
+      } else{G('setupError').textContent=d.error||'Errore';}
+    }).catch(function(){G('setupError').textContent='Errore di connessione';});
 }
 
 /* ===== API HELPERS ===== */
@@ -643,22 +671,38 @@ function loadAccounts(){
     if(!keys.length){el.innerHTML='<div style="color:#999;font-size:13px;padding:8px 0;">Nessun cliente ancora.</div>';return;}
     el.innerHTML=keys.map(function(k){
       var a=accounts[k];
-      return'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f5f5f5;border-radius:8px;border:1px solid #e0e0e0;">'+
-        '<div><div style="font-weight:600;font-size:14px;">'+a.name+'</div>'+
-        '<div style="font-size:12px;color:#777;">Creato: '+a.createdAt+'</div></div>'+
-        '<button class="btn-delete" style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;background:var(--danger);color:#fff;" onclick="deleteAccount(\''+k+'\')">Elimina</button>'+
+      var statusHtml=a.hasPassword
+        ?'<span style="color:#2e7d32;font-size:12px;font-weight:600;">✅ Password impostata</span>'
+        :'<span style="color:#e65100;font-size:12px;font-weight:600;">⏳ In attesa di registrazione</span>';
+      var linkHtml='';
+      if(a.token){
+        var link=window.location.origin+'/?token='+a.token;
+        linkHtml='<div style="margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+          '<span style="font-size:11px;color:#555;font-family:monospace;background:#e8eaf6;padding:3px 8px;border-radius:4px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+link+'</span>'+
+          '<button onclick="copyLink(\''+link+'\')" style="padding:4px 10px;border:none;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;background:#1565c0;color:#fff;">📋 Copia Link</button>'+
+          '</div>';
+      }
+      return'<div style="padding:12px 16px;background:#f5f5f5;border-radius:8px;border:1px solid #e0e0e0;margin-bottom:4px;">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'+
+          '<div><div style="font-weight:700;font-size:15px;">'+a.name+'</div>'+
+          '<div style="font-size:12px;color:#777;margin-top:2px;">Creato: '+a.createdAt+' — '+statusHtml+'</div>'+linkHtml+'</div>'+
+          '<button class="btn-delete" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;background:var(--danger);color:#fff;" onclick="deleteAccount(\''+k+'\')">Elimina</button>'+
+        '</div>'+
       '</div>';
     }).join('');
   });
 }
+function copyLink(link){
+  navigator.clipboard.writeText(link).then(function(){notify('Link copiato negli appunti!');});
+}
 function createAccount(){
-  var name=G('newClientName').value.trim(),pwd=G('newClientPwd').value.trim();
-  if(!name||!pwd){notify('Inserisci nome e password','error');return;}
-  fetch('/api/accounts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,password:pwd})})
+  var name=G('newClientName').value.trim();
+  if(!name){notify('Inserisci il nome del cliente','error');return;}
+  fetch('/api/accounts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name})})
     .then(function(r){return r.json()}).then(function(d){
       if(!d.ok){notify('Errore: '+(d.error||'?'),'error');return;}
-      G('newClientName').value='';G('newClientPwd').value='';
-      notify('Account creato — '+name+' / '+pwd);
+      G('newClientName').value='';
+      notify('Link generato per '+name+' — copialo dalla lista!');
       loadAccounts();
     });
 }
@@ -686,6 +730,16 @@ function resetConfig(){
 }
 
 document.addEventListener('DOMContentLoaded',function(){
+  if(_setupToken){
+    fetch('/api/setup?token='+encodeURIComponent(_setupToken))
+      .then(function(r){return r.json()}).then(function(d){
+        if(d.ok){
+          G('setupWelcomeMsg').textContent='Ciao '+d.name+'! Scegli la tua password personale.';
+          G('setupScreen').classList.add('show');
+        } else{G('loginScreen').classList.add('show');}
+      }).catch(function(){G('loginScreen').classList.add('show');});
+    return;
+  }
   fetch('/api/me').then(function(r){return r.json()}).then(function(d){
     if(d.auth){_accountType=d.type||'main';initApp();}
     else{G('loginScreen').classList.add('show');}

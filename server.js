@@ -97,26 +97,56 @@ app.get('/api/accounts', requireAuth, requireAdmin, async (req, res) => {
     const accounts = await readDB('accounts');
     const safe = {};
     Object.entries(accounts).forEach(([k, v]) => {
-      safe[k] = { id: v.id, name: v.name, prefix: v.prefix, createdAt: v.createdAt };
+      safe[k] = { id: v.id, name: v.name, prefix: v.prefix, createdAt: v.createdAt, token: v.token || null, hasPassword: !!v.hash };
     });
     res.json(safe);
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 app.post('/api/accounts', requireAuth, requireAdmin, async (req, res) => {
   try {
-    const { name, password } = req.body;
-    if (!name || !password) return res.status(400).json({ error: 'Nome e password obbligatori' });
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Nome obbligatorio' });
     const id = 'acc_' + Date.now();
     const prefix = 'c_' + name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20) + '_';
-    const account = { id, name, prefix, hash: hashPwd(password), createdAt: new Date().toLocaleString('it-IT') };
+    const token = crypto.randomBytes(20).toString('hex');
+    const account = { id, name, prefix, hash: null, token, createdAt: new Date().toLocaleString('it-IT') };
     await writeOne('accounts', id, account);
-    res.json({ ok: true, id });
+    res.json({ ok: true, id, token });
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 app.delete('/api/accounts/:id', requireAuth, requireAdmin, async (req, res) => {
   try { await deleteOne('accounts', req.params.id); res.json({ ok: true }); }
   catch(e) { res.status(500).json({ error: e.message }); }
 });
+
+// — SETUP PRIMO ACCESSO (pubblico, via token) —
+app.get('/api/setup', async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ error: 'Token mancante' });
+  try {
+    const accounts = await readDB('accounts');
+    const entry = Object.entries(accounts).find(([, a]) => a.token === token);
+    if (!entry) return res.status(404).json({ error: 'Link non valido o già usato' });
+    res.json({ ok: true, name: entry[1].name });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/setup', async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) return res.status(400).json({ error: 'Dati mancanti' });
+  if (password.length < 6) return res.status(400).json({ error: 'Password troppo corta (min 6 caratteri)' });
+  try {
+    const accounts = await readDB('accounts');
+    const entry = Object.entries(accounts).find(([, a]) => a.token === token);
+    if (!entry) return res.status(404).json({ error: 'Link non valido o già usato' });
+    const [id, account] = entry;
+    await writeOne('accounts', id, { ...account, hash: hashPwd(password), token: null });
+    const cookieOpts = { signed: true, httpOnly: true, maxAge: 7*24*60*60*1000, sameSite: 'lax' };
+    res.cookie('auth', 'client|' + account.prefix, cookieOpts);
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+// — CAMBIA PASSWORD (cliente loggato) —
 app.post('/api/change-password', requireAuth, async (req, res) => {
   if (req.accountType !== 'client') return res.status(403).json({ error: 'Solo account clienti' });
   try {
