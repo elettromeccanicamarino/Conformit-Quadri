@@ -529,11 +529,13 @@ function renderRegistro(){
       '<td><div style="font-weight:600">'+(r.denominazione||'—')+'</div><div class="reg-rif">'+rif+'</div></td>'+
       '<td>'+(r.committente||'—')+'</td><td class="reg-date">'+(r.data||'—')+'</td>'+
       '<td><button class="btn-sm btn-load" onclick="loadFromReg(\''+r.certKey+'\')">Apri</button>'+
+      '<button class="btn-sm" style="background:#0277bd;color:#fff" onclick="dupFromReg(\''+r.certKey+'\')">⧉ Duplica</button>'+
       '<button class="btn-sm btn-delete" onclick="delFromReg(\''+r.id+'\',\''+r.certKey+'\')">✕</button></td></tr>';
   }).join('');
   G('regTableWrap').innerHTML='<table class="reg-table"><thead><tr><th>N°</th><th>Matricola</th><th>Denominazione / Riferimento</th><th>Committente</th><th>Data</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
 }
 function loadFromReg(certKey){closeRegistro();loadCert(certKey)}
+function dupFromReg(certKey){closeRegistro();duplicateCert(certKey)}
 function delFromReg(regId,certKey){
   if(!confirm('Eliminare dal registro e dall\'archivio?'))return;
   Promise.all([apiDel('/api/registro/'+regId),apiDel('/api/certs/'+certKey)])
@@ -864,7 +866,7 @@ function loadCertList(){
   list.innerHTML=keys.map(function(k){
     var c=_certs[k],ps=c.progressivo?(' [N° '+fmtP(c.progressivo.num,c.progressivo.year)+']'):'';
     return'<li><div><div class="cert-info">'+(c.label||k)+ps+'</div><div class="cert-meta">Salvato: '+(c.savedAt||'—')+'</div></div>'+
-    '<div class="cert-actions"><button class="btn-load" onclick="loadCert(\''+k+'\')">Carica</button><button class="btn-delete" onclick="deleteCert(\''+k+'\')">Elimina</button></div></li>';
+    '<div class="cert-actions"><button class="btn-load" onclick="loadCert(\''+k+'\')">Carica</button><button style="background:#0277bd;color:#fff" onclick="duplicateCert(\''+k+'\')">⧉ Duplica</button><button class="btn-delete" onclick="deleteCert(\''+k+'\')">Elimina</button></div></li>';
   }).join('');
 }
 function loadCert(key){
@@ -885,6 +887,29 @@ function loadCert(key){
   var ar=document.querySelector('input[name="alimGen"][value="'+c.alimGen+'"]');if(ar)ar.checked=true;
   _progr=c.progressivo||null;_certKey=key;
   _matEdited=true;switchTabById('tab-dati');refreshBadge();notify('Certificato caricato');
+}
+function duplicateCert(key){
+  var c=_certs[key];if(!c)return;
+  ['annoMarcatura','committente','indirizzoCommittente','denominazione','riferimento',
+   'tensioneNom','correnteNom','tensioneIsol','frequenza','dimL','dimH','dimP','carpMarca','instAltroText']
+    .forEach(function(f){if(G(f))G(f).value=c[f]||''});
+  G('dataCert').value=new Date().toISOString().split('T')[0];
+  G('gradoProtezione').value=c.gradoProtezione||'IP65';
+  G('numColonne').value=c.numColonne||'1';
+  G('carpMateriale').value=c.carpMateriale||'Metallo';
+  var ir=document.querySelector('input[name="installazione"][value="'+c.installazione+'"]');if(ir)ir.checked=true;
+  G('accFronte').checked=!!c.accFronte;G('accRetro').checked=!!c.accRetro;
+  G('accFronteFianchi').checked=!!c.accFronteFianchi;G('accTotale').checked=!!c.accTotale;
+  if(c.prove)for(var i=0;i<8;i++)G('prova'+(i+1)).checked=c.prove[i];
+  var dr=document.querySelector('input[name="provaDiel"][value="'+c.provaDiel+'"]');if(dr)dr.checked=true;
+  ['morsAlto','morsBasso','morsVanoSx','morsVanoCle','morsVanoDx','collPrefab'].forEach(function(f){G(f).checked=!!c[f]});
+  var ar=document.querySelector('input[name="alimGen"][value="'+c.alimGen+'"]');if(ar)ar.checked=true;
+  _progr=null;_certKey=null;_matEdited=false;
+  G('matricola').value='';
+  G('previewContainer').innerHTML='';
+  refreshBadge();
+  switchTabById('tab-dati');
+  notify('Duplicato — matricola aggiornata, salva come nuovo certificato');
 }
 function deleteCert(key){
   if(!confirm('Eliminare questo certificato?'))return;
