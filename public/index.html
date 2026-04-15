@@ -474,6 +474,33 @@
         <button id="btnResetDemo" class="btn" style="background:#e65100;color:#fff;display:none;" onclick="resetConfig()">🔄 Reimposta configurazione</button>
       </div>
     </div>
+
+    <!-- SEZIONE CAMBIA PASSWORD (tutti gli utenti non-main) -->
+    <div id="sectionCambiaPwd" style="display:none;">
+      <div style="border-top:2px solid #e0e0e0;margin-top:28px;padding-top:24px;">
+        <h2><span class="icon">🔑</span> Cambia Password</h2>
+        <p style="color:#555;font-size:13px;margin:0 0 16px;">Scegli la tua password personale.</p>
+        <div class="form-grid" style="max-width:400px;">
+          <div class="form-group"><label>Nuova Password</label><input type="password" id="newPwd1" placeholder="Nuova password" autocomplete="new-password"></div>
+          <div class="form-group"><label>Conferma Password</label><input type="password" id="newPwd2" placeholder="Ripeti password" autocomplete="new-password"></div>
+        </div>
+        <button class="btn btn-success" onclick="changePassword()">💾 Salva Password</button>
+      </div>
+    </div>
+
+    <!-- SEZIONE ADMIN: Gestione Account Clienti -->
+    <div id="sectionAdmin" style="display:none;">
+      <div style="border-top:2px solid #e0e0e0;margin-top:28px;padding-top:24px;">
+        <h2><span class="icon">👥</span> Account Clienti</h2>
+        <p style="color:#555;font-size:13px;margin:0 0 16px;">Crea una password per ogni cliente. Ogni cliente vede solo i suoi dati e non può creare account.</p>
+        <div class="form-grid" style="max-width:600px;">
+          <div class="form-group"><label>Nome Cliente / Azienda</label><input type="text" id="newClientName" placeholder="Es. Rossi Impianti"></div>
+          <div class="form-group"><label>Password</label><input type="text" id="newClientPwd" placeholder="Es. rossi2026" autocomplete="new-password"></div>
+        </div>
+        <button class="btn btn-success" onclick="createAccount()">➕ Crea Account</button>
+        <div id="accountsList" style="margin-top:20px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
   </div>
 
   <div class="btn-container">
@@ -554,6 +581,8 @@ function applyConfig(){
     var el=G('cfg_'+f);if(el&&!el.dataset.dirty)el.value=_config[f]||'';
   });
   if(G('btnResetDemo'))G('btnResetDemo').style.display=_accountType==='demo'?'':'none';
+  if(G('sectionAdmin'))G('sectionAdmin').style.display=_accountType==='main'?'':'none';
+  if(G('sectionCambiaPwd'))G('sectionCambiaPwd').style.display=_accountType==='client'?'':'none';
   if(_config.logo){
     if(G('cfg_logoPreview')){G('cfg_logoPreview').src=_config.logo;G('cfg_logoPreview').style.display='';}
     if(G('btnRemoveLogo'))G('btnRemoveLogo').style.display='';
@@ -605,6 +634,52 @@ function removeLogo(){
 }
 function showFirstRunModal(){G('firstRunOverlay').classList.add('open');}
 function closeFirstRunModal(){G('firstRunOverlay').classList.remove('open');}
+/* ===== GESTIONE ACCOUNT ===== */
+function loadAccounts(){
+  if(_accountType!=='main')return;
+  apiGet('/api/accounts').then(function(accounts){
+    var keys=Object.keys(accounts);
+    var el=G('accountsList');
+    if(!keys.length){el.innerHTML='<div style="color:#999;font-size:13px;padding:8px 0;">Nessun cliente ancora.</div>';return;}
+    el.innerHTML=keys.map(function(k){
+      var a=accounts[k];
+      return'<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f5f5f5;border-radius:8px;border:1px solid #e0e0e0;">'+
+        '<div><div style="font-weight:600;font-size:14px;">'+a.name+'</div>'+
+        '<div style="font-size:12px;color:#777;">Creato: '+a.createdAt+'</div></div>'+
+        '<button class="btn-delete" style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;background:var(--danger);color:#fff;" onclick="deleteAccount(\''+k+'\')">Elimina</button>'+
+      '</div>';
+    }).join('');
+  });
+}
+function createAccount(){
+  var name=G('newClientName').value.trim(),pwd=G('newClientPwd').value.trim();
+  if(!name||!pwd){notify('Inserisci nome e password','error');return;}
+  fetch('/api/accounts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,password:pwd})})
+    .then(function(r){return r.json()}).then(function(d){
+      if(!d.ok){notify('Errore: '+(d.error||'?'),'error');return;}
+      G('newClientName').value='';G('newClientPwd').value='';
+      notify('Account creato — '+name+' / '+pwd);
+      loadAccounts();
+    });
+}
+function deleteAccount(id){
+  if(!confirm('Eliminare questo account?\nI certificati del cliente NON verranno eliminati.'))return;
+  apiDel('/api/accounts/'+id).then(function(){notify('Account eliminato','warn');loadAccounts();});
+}
+
+function changePassword(){
+  var p1=G('newPwd1').value.trim(),p2=G('newPwd2').value.trim();
+  if(!p1)return notify('Inserisci la nuova password','error');
+  if(p1!==p2)return notify('Le password non coincidono','error');
+  if(p1.length<6)return notify('Password troppo corta (min 6 caratteri)','error');
+  fetch('/api/change-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:p1})})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(d.ok){G('newPwd1').value='';G('newPwd2').value='';notify('Password cambiata con successo!');}
+      else notify(d.error||'Errore','error');
+    });
+}
+
 function resetConfig(){
   if(!confirm('Reimposta la configurazione azienda?\nIl modal di configurazione comparirà di nuovo al prossimo accesso.'))return;
   fetch('/api/config',{method:'DELETE'}).then(function(){location.reload();});
@@ -644,6 +719,7 @@ function switchTab(btn,tabId){
   G(tabId).classList.add('active');btn.classList.add('active');
   if(tabId==='tab-clienti')renderClientsList();
   if(tabId==='tab-archivio')loadCertList();
+  if(tabId==='tab-impostazioni')loadAccounts();
 }
 function switchTabById(tabId){
   document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});

@@ -1,14 +1,16 @@
 'use strict';
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const crypto = require('crypto');
 const path = require('path');
 const { Client } = require('pg');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const APP_PASSWORD  = process.env.APP_PASSWORD  || 'marino2026';
-const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'demo2026';
+const APP_PASSWORD = process.env.APP_PASSWORD || 'marino2026';
 const SECRET = process.env.SESSION_SECRET || 'em-marino-secret-2026';
+
+function hashPwd(p) { return crypto.createHash('sha256').update(p + SECRET).digest('hex'); }
 
 // — PostgreSQL —
 const db = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
@@ -42,48 +44,106 @@ app.use(express.json({ limit: '25mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cookieParser(SECRET));
 
-// requireAuth: accetta sia account principale ('ok') che demo ('demo')
-// imposta req.prefix = '' per account principale, 'demo_' per demo
+// Cookie format: "type|prefix"
+// Backward compat: 'ok' = main, 'demo' = demo
 function requireAuth(req, res, next) {
   const auth = req.signedCookies && req.signedCookies.auth;
-  if (auth === 'ok')   { req.prefix = '';      return next(); }
-  if (auth === 'demo') { req.prefix = 'demo_'; return next(); }
+  if (!auth) return res.status(401).json({ error: 'Non autenticato' });
+  if (auth === 'ok')   { req.accountType = 'main';   req.prefix = '';       return next(); }
+  if (auth === 'demo') { req.accountType = 'demo';   req.prefix = 'demo_';  return next(); }
+  const parts = auth.split('|');
+  if (parts.length === 2) { req.accountType = parts[0]; req.prefix = parts[1]; return next(); }
   res.status(401).json({ error: 'Non autenticato' });
+}
+function requireAdmin(req, res, next) {
+  if (req.accountType === 'main') return next();
+  res.status(403).json({ error: 'Solo admin' });
 }
 
 // — LOGIN —
-app.post('/api/login', (req, res) => {
-  if (req.body.password === APP_PASSWORD) {
-    res.cookie('auth', 'ok',   { signed: true, httpOnly: true, maxAge: 7*24*60*60*1000, sameSite: 'lax' });
-    res.json({ ok: true });
-  } else if (DEMO_PASSWORD && req.body.password === DEMO_PASSWORD) {
-    res.cookie('auth', 'demo', { signed: true, httpOnly: true, maxAge: 7*24*60*60*1000, sameSite: 'lax' });
-    res.json({ ok: true });
-  } else {
-    res.status(401).json({ error: 'Password errata' });
+app.post('/api/login', async (req, res) => {
+  const pwd = req.body.password;
+  const cookieOpts = { signed: true, httpOnly: true, maxAge: 7*24*60*60*1000, sameSite: 'lax' };
+  if (pwd === APP_PASSWORD) {
+    res.cookie('auth', 'main|', cookieOpts);
+    return res.json({ ok: true });
   }
+  // Cerca negli account clienti
+  try {
+    const accounts = await readDB('accounts');
+    const hashed = hashPwd(pwd);
+    const match = Object.values(accounts).find(a => a.hash === hashed);
+    if (match) {
+      res.cookie('auth', 'client|' + match.prefix, cookieOpts);
+      return res.json({ ok: true });
+    }
+  } catch(e) {}
+  res.status(401).json({ error: 'Password errata' });
 });
 app.post('/api/logout', (req, res) => { res.clearCookie('auth'); res.json({ ok: true }); });
 app.get('/api/me', (req, res) => {
   const auth = req.signedCookies && req.signedCookies.auth;
-  if (auth === 'ok')   return res.json({ auth: true,  type: 'main' });
-  if (auth === 'demo') return res.json({ auth: true,  type: 'demo' });
+  if (!auth) return res.json({ auth: false });
+  if (auth === 'ok' || auth === 'main|') return res.json({ auth: true, type: 'main' });
+  if (auth === 'demo') return res.json({ auth: true, type: 'demo' });
+  const parts = auth.split('|');
+  if (parts.length === 2) return res.json({ auth: true, type: parts[0] });
   res.json({ auth: false });
 });
 
+// — GESTIONE ACCOUNT CLIENTI (solo admin) —
+app.get('/api/accounts', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const accounts = await readDB('accounts');
+    const safe = {};
+    Object.entries(accounts).forEach(([k, v]) => {
+      safe[k] = { id: v.id, name: v.name, prefix: v.prefix, createdAt: v.createdAt };
+    });
+    res.json(safe);
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/accounts', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    if (!name || !password) return res.status(400).json({ error: 'Nome e password obbligatori' });
+    const id = 'acc_' + Date.now();
+    const prefix = 'c_' + name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20) + '_';
+    const account = { id, name, prefix, hash: hashPwd(password), createdAt: new Date().toLocaleString('it-IT') };
+    await writeOne('accounts', id, account);
+    res.json({ ok: true, id });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.delete('/api/accounts/:id', requireAuth, requireAdmin, async (req, res) => {
+  try { await deleteOne('accounts', req.params.id); res.json({ ok: true }); }
+  catch(e) { res.status(500).json({ error: e.message }); }
+});
+app.post('/api/change-password', requireAuth, async (req, res) => {
+  if (req.accountType !== 'client') return res.status(403).json({ error: 'Solo account clienti' });
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 6) return res.status(400).json({ error: 'Password troppo corta' });
+    const accounts = await readDB('accounts');
+    const entry = Object.entries(accounts).find(([,a]) => a.prefix === req.prefix);
+    if (!entry) return res.status(404).json({ error: 'Account non trovato' });
+    const [id, account] = entry;
+    await writeOne('accounts', id, { ...account, hash: hashPwd(password) });
+    res.json({ ok: true });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 // — CERTIFICATI —
-app.get('/api/certs',       requireAuth, async (req, res) => { try { res.json(await readDB(req.prefix+'certs')); } catch(e) { res.status(500).json({error:e.message}); } });
-app.put('/api/certs/:key',  requireAuth, async (req, res) => { try { await writeOne(req.prefix+'certs', req.params.key, {...req.body, savedAt: new Date().toLocaleString('it-IT')}); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
+app.get('/api/certs',         requireAuth, async (req, res) => { try { res.json(await readDB(req.prefix+'certs')); } catch(e) { res.status(500).json({error:e.message}); } });
+app.put('/api/certs/:key',    requireAuth, async (req, res) => { try { await writeOne(req.prefix+'certs', req.params.key, {...req.body, savedAt: new Date().toLocaleString('it-IT')}); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 app.delete('/api/certs/:key', requireAuth, async (req, res) => { try { await deleteOne(req.prefix+'certs', req.params.key); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 
 // — REGISTRO —
-app.get('/api/registro',       requireAuth, async (req, res) => { try { res.json(await readDB(req.prefix+'registro')); } catch(e) { res.status(500).json({error:e.message}); } });
-app.put('/api/registro/:key',  requireAuth, async (req, res) => { try { await writeOne(req.prefix+'registro', req.params.key, req.body); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
+app.get('/api/registro',         requireAuth, async (req, res) => { try { res.json(await readDB(req.prefix+'registro')); } catch(e) { res.status(500).json({error:e.message}); } });
+app.put('/api/registro/:key',    requireAuth, async (req, res) => { try { await writeOne(req.prefix+'registro', req.params.key, req.body); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 app.delete('/api/registro/:key', requireAuth, async (req, res) => { try { await deleteOne(req.prefix+'registro', req.params.key); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 
 // — CLIENTI —
-app.get('/api/clients',       requireAuth, async (req, res) => { try { res.json(await readDB(req.prefix+'clients')); } catch(e) { res.status(500).json({error:e.message}); } });
-app.put('/api/clients/:key',  requireAuth, async (req, res) => { try { await writeOne(req.prefix+'clients', req.params.key, req.body); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
+app.get('/api/clients',         requireAuth, async (req, res) => { try { res.json(await readDB(req.prefix+'clients')); } catch(e) { res.status(500).json({error:e.message}); } });
+app.put('/api/clients/:key',    requireAuth, async (req, res) => { try { await writeOne(req.prefix+'clients', req.params.key, req.body); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 app.delete('/api/clients/:key', requireAuth, async (req, res) => { try { await deleteOne(req.prefix+'clients', req.params.key); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 
 // — CONFIG AZIENDA —
@@ -113,5 +173,4 @@ app.post('/api/import', requireAuth, async (req, res) => {
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-
 app.listen(PORT, '0.0.0.0', () => console.log(`Marino App avviata sulla porta ${PORT}`));
