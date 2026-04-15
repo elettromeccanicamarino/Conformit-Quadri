@@ -64,8 +64,9 @@
     .btn-danger{background:linear-gradient(135deg,#c62828,#e53935);color:#fff}
     .btn-outline{background:#fff;color:var(--primary);border:2px solid var(--primary)}.btn-outline:hover{background:var(--primary);color:#fff}
     .btn-registro{background:linear-gradient(135deg,#e65100,#ef6c00);color:#fff}.btn-registro:hover{transform:translateY(-2px)}
-    .tab-container{display:flex;gap:0;flex-wrap:wrap}
-    .tab-btn{padding:12px 20px;border:none;background:#e0e0e0;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-light);transition:all .3s;border-radius:10px 10px 0 0;}
+    .tab-container{display:flex;gap:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#ccc transparent;}
+    .tab-container::-webkit-scrollbar{height:4px}.tab-container::-webkit-scrollbar-thumb{background:#ccc;border-radius:2px}
+    .tab-btn{padding:11px 16px;border:none;background:#e0e0e0;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text-light);transition:all .3s;border-radius:10px 10px 0 0;white-space:nowrap;flex-shrink:0;}
     .tab-btn.active{background:var(--card-bg);color:var(--primary);box-shadow:0 -2px 8px rgba(0,0,0,.1)}
     .tab-content{display:none}.tab-content.active{display:block}
     .notification{position:fixed;top:90px;right:20px;padding:14px 24px;background:var(--success);color:#fff;border-radius:10px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.3);z-index:9000;transform:translateX(400px);transition:transform .4s ease;}
