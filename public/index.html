@@ -180,8 +180,8 @@
 <!-- SCHERMATA LOGIN -->
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
-    <div class="login-logo">EM</div>
-    <h2>Elettromeccanica Marino</h2>
+    <div class="login-logo" id="logoCircleLogin">EM</div>
+    <h2 id="loginRagSoc">Elettromeccanica Marino</h2>
     <p>Inserisci la password per accedere</p>
     <input type="password" id="loginPwd" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()">
     <button class="login-btn" onclick="doLogin()">Accedi</button>
@@ -190,15 +190,39 @@
 </div>
 
 <div class="app-header">
-  <div class="logo-circle">EM</div>
+  <div class="logo-circle" id="logoCircle">EM</div>
   <div>
     <h1>Certificati di Conformità — Quadri Elettrici BT</h1>
-    <p>CEI EN 61439-1 / CEI EN 61439-2 — Elettromeccanica Marino</p>
+    <p id="headerSubtitle">CEI EN 61439-1 / CEI EN 61439-2 — Elettromeccanica Marino</p>
   </div>
   <button class="logout-btn" onclick="doLogout()">🚪 Esci</button>
 </div>
 
 <div class="notification" id="notification"></div>
+
+<!-- MODAL PRIMO ACCESSO / IMPOSTAZIONI -->
+<div class="reg-overlay" id="firstRunOverlay">
+  <div class="reg-modal" style="max-width:520px;">
+    <div class="reg-head">
+      <h2>⚙️ Configurazione Azienda</h2>
+    </div>
+    <div style="padding:24px;">
+      <p style="margin:0 0 18px;color:#555;font-size:14px;">Inserisci i dati della tua azienda una volta sola — verranno stampati su tutti i certificati.</p>
+      <div class="form-grid">
+        <div class="form-group full-width"><label>Ragione Sociale *</label><input type="text" id="cfg_ragioneSociale" placeholder="Es. Elettromeccanica Marino"></div>
+        <div class="form-group full-width"><label>Indirizzo (via e numero)</label><input type="text" id="cfg_indirizzo" placeholder="Es. Via Col Dei Pioppi, 14"></div>
+        <div class="form-group"><label>CAP</label><input type="text" id="cfg_cap" placeholder="Es. 63074"></div>
+        <div class="form-group"><label>Città</label><input type="text" id="cfg_citta" placeholder="Es. S. Benedetto del Tr."></div>
+        <div class="form-group"><label>Provincia</label><input type="text" id="cfg_provincia" placeholder="Es. Ap" maxlength="5"></div>
+        <div class="form-group"><label>Sigla Logo (2-3 lettere)</label><input type="text" id="cfg_logoLetters" placeholder="Es. EM" maxlength="3"></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button class="btn btn-success" style="flex:1;" onclick="saveConfig(true)">💾 Salva e Inizia</button>
+        <button class="btn" style="background:#aaa;color:#fff;" onclick="closeFirstRunModal()">Salta (usa default)</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- REGISTRO MODALE -->
 <div class="reg-overlay" id="regOverlay">
@@ -225,6 +249,7 @@
     <button class="tab-btn" onclick="switchTab(this,'tab-cablaggio')">🔌 Cablaggio</button>
     <button class="tab-btn" onclick="switchTab(this,'tab-clienti')">👥 Rubrica Clienti</button>
     <button class="tab-btn" onclick="switchTab(this,'tab-archivio')">💾 Archivio</button>
+    <button class="tab-btn" onclick="switchTab(this,'tab-impostazioni')">⚙️ Impostazioni</button>
   </div>
 
   <div class="tab-content active" id="tab-dati">
@@ -390,6 +415,22 @@
     </div>
   </div>
 
+  <div class="tab-content" id="tab-impostazioni">
+    <div class="form-section">
+      <h2><span class="icon">⚙️</span> Impostazioni Azienda</h2>
+      <p style="color:#555;font-size:13px;margin:0 0 16px;">Questi dati vengono stampati su tutti i certificati al posto dei dati predefiniti.</p>
+      <div class="form-grid">
+        <div class="form-group full-width"><label>Ragione Sociale *</label><input type="text" id="cfg_ragioneSociale" placeholder="Es. Elettromeccanica Marino"></div>
+        <div class="form-group full-width"><label>Indirizzo (via e numero)</label><input type="text" id="cfg_indirizzo" placeholder="Es. Via Col Dei Pioppi, 14"></div>
+        <div class="form-group"><label>CAP</label><input type="text" id="cfg_cap" placeholder="Es. 63074"></div>
+        <div class="form-group"><label>Città</label><input type="text" id="cfg_citta" placeholder="Es. S. Benedetto del Tr."></div>
+        <div class="form-group"><label>Provincia</label><input type="text" id="cfg_provincia" placeholder="Es. Ap" maxlength="5"></div>
+        <div class="form-group"><label>Sigla Logo (2-3 lettere)</label><input type="text" id="cfg_logoLetters" placeholder="Es. EM" maxlength="3"></div>
+      </div>
+      <button class="btn btn-success" onclick="saveConfig(false)" style="margin-top:8px;">💾 Salva Impostazioni</button>
+    </div>
+  </div>
+
   <div class="btn-container">
     <button class="btn btn-primary"  onclick="generatePreview()">👁 Anteprima</button>
     <button class="btn btn-success"  onclick="printCert()">🖨 Stampa / PDF</button>
@@ -409,6 +450,7 @@
 'use strict';
 var acIndex=-1,_progr=null,_certKey=null,_matEdited=false;
 var _clients={},_certs={},_registro={};
+var _config={ragioneSociale:'Elettromeccanica Marino',indirizzo:'Via Col Dei pioppi, 14',cap:'63074',citta:'S. Benedetto del Tr.',provincia:'Ap',logoLetters:'EM'};
 
 function G(id){return document.getElementById(id)}
 function notify(msg,type){
@@ -442,14 +484,48 @@ function apiPost(url,data){return fetch(url,{method:'POST',headers:{'Content-Typ
 
 /* ===== INIT ===== */
 function initApp(){
-  Promise.all([apiGet('/api/certs'),apiGet('/api/registro'),apiGet('/api/clients')])
+  Promise.all([apiGet('/api/certs'),apiGet('/api/registro'),apiGet('/api/clients'),apiGet('/api/config')])
     .then(function(results){
       _certs=results[0];_registro=results[1];_clients=results[2];
+      var cfg=results[3];
+      if(cfg&&cfg.ragioneSociale)Object.assign(_config,cfg);
+      applyConfig();
       G('dataCert').value=new Date().toISOString().split('T')[0];
       G('annoMarcatura').value=new Date().getFullYear();
       loadCertList();refreshBadge();
+      if(!cfg||!cfg.ragioneSociale)G('firstRunOverlay').classList.add('open');
     }).catch(function(){notify('Errore caricamento dati','error');});
 }
+function applyConfig(){
+  var logo=_config.logoLetters||_config.ragioneSociale.split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase();
+  G('logoCircle').textContent=logo;
+  G('logoCircleLogin').textContent=logo;
+  G('loginRagSoc').textContent=_config.ragioneSociale;
+  G('headerSubtitle').textContent='CEI EN 61439-1 / CEI EN 61439-2 — '+_config.ragioneSociale;
+  document.title=_config.ragioneSociale+' — Certificati di Conformità';
+  ['ragioneSociale','indirizzo','cap','citta','provincia','logoLetters'].forEach(function(f){
+    var el=G('cfg_'+f);if(el&&!el.dataset.dirty)el.value=_config[f]||'';
+  });
+}
+function saveConfig(closeModal){
+  var c={
+    ragioneSociale:(G('cfg_ragioneSociale').value||'').trim(),
+    indirizzo:(G('cfg_indirizzo').value||'').trim(),
+    cap:(G('cfg_cap').value||'').trim(),
+    citta:(G('cfg_citta').value||'').trim(),
+    provincia:(G('cfg_provincia').value||'').trim(),
+    logoLetters:(G('cfg_logoLetters').value||'').trim()
+  };
+  if(!c.ragioneSociale){notify('Inserisci la ragione sociale','error');return;}
+  apiPut('/api/config',c).then(function(){
+    Object.assign(_config,c);
+    applyConfig();
+    if(closeModal)closeFirstRunModal();
+    notify('Impostazioni azienda salvate ✓');
+  }).catch(function(){notify('Errore salvataggio','error');});
+}
+function showFirstRunModal(){G('firstRunOverlay').classList.add('open');}
+function closeFirstRunModal(){G('firstRunOverlay').classList.remove('open');}
 
 document.addEventListener('DOMContentLoaded',function(){
   fetch('/api/me').then(function(r){return r.json()}).then(function(d){
@@ -490,7 +566,7 @@ function switchTabById(tabId){
   document.querySelectorAll('.tab-content').forEach(function(t){t.classList.remove('active')});
   document.querySelectorAll('.tab-btn').forEach(function(b){b.classList.remove('active')});
   G(tabId).classList.add('active');
-  var order=['tab-dati','tab-tecnici','tab-costruttivi','tab-cablaggio','tab-clienti','tab-archivio'];
+  var order=['tab-dati','tab-tecnici','tab-costruttivi','tab-cablaggio','tab-clienti','tab-archivio','tab-impostazioni'];
   var btns=document.querySelectorAll('.tab-btn');
   var idx=order.indexOf(tabId);if(idx>=0&&btns[idx])btns[idx].classList.add('active');
 }
@@ -690,12 +766,12 @@ function infoBoxes(d){
 }
 function footer(d,title){
   title=title||'IL LEGALE RAPPRESENTANTE';
-  return'<div class="page-footer"><div class="fdate">S. Benedetto del Tr., '+d.data+'</div><div class="ftitle">'+title+'</div><div class="stamp-box">Timbro e Firma</div></div>';
+  return'<div class="page-footer"><div class="fdate">'+_config.citta+', '+d.data+'</div><div class="ftitle">'+title+'</div><div class="stamp-box">Timbro e Firma</div></div>';
 }
 function footerSplit(d,title){
   title=title||'IL LEGALE RAPPRESENTANTE';
   return'<div class="page-footer split">'+
-    '<div class="footer-left"><div class="fdate">S. Benedetto del Tr., '+d.data+'</div></div>'+
+    '<div class="footer-left"><div class="fdate">'+_config.citta+', '+d.data+'</div></div>'+
     '<div class="footer-right"><div class="ftitle" style="text-align:right;">'+title+'</div><div class="stamp-box">Timbro e Firma</div></div>'+
   '</div>';
 }
@@ -705,7 +781,7 @@ function genPage1(d){
   return'<div class="page">'+spacer()+
   '<div class="cert-title">DICHIARAZIONE DI CONFORMITA\'</div>'+
   '<div class="cert-subtitle">SECONDO CEI EN 61439-1 E CEI EN 61439-2</div>'+
-  '<div class="cert-declaration"><em>Noi ELETTROMECCANICA MARINO, Via Col Dei pioppi, 14 – 63074 S. Benedetto del Tr. (Ap)</em><br><em>Dichiariamo, sotto la nostra responsabilità, che il quadro elettrico per bassa tensione secondo<br>CEI EN 61439-1 e CEI EN 61439-2</em></div>'+
+  '<div class="cert-declaration"><em>Noi '+_config.ragioneSociale.toUpperCase()+', '+_config.indirizzo+' – '+_config.cap+' '+_config.citta+' ('+_config.provincia+')</em><br><em>Dichiariamo, sotto la nostra responsabilità, che il quadro elettrico per bassa tensione secondo<br>CEI EN 61439-1 e CEI EN 61439-2</em></div>'+
   infoBoxes(d)+
   '<div class="tension-line"><em>Tensione nominale (Un): '+d.tensioneNom+'V - Corrente nominale (In) '+d.correnteNom+'A</em></div>'+
   '<div class="conformity-text">è stato realizzato a regola d\'arte e conformemente a tutte le specifiche previste dalla Norma CEI EN 61439-2</div>'+
@@ -743,7 +819,7 @@ function genPage2(d){
   return'<div class="page">'+spacer()+
   '<div class="cert-title">DICHIARAZIONE CE DI CONFORMITA\'</div>'+
   '<div class="cert-subtitle">QUADRI ELETTRICI BT SECONDO<br>CEI EN 61439-1 E CEI EN 61439-2</div>'+
-  '<div class="cert-declaration"><em>Noi ELETTROMECCANICA MARINO, Via Col Dei pioppi, 14 – 63074 S. Benedetto del Tr. (Ap)</em><br><em>Costruttori del quadro elettrico per bassa tensione secondo CEI EN 61439-1 e CEI EN 61439-2</em></div>'+
+  '<div class="cert-declaration"><em>Noi '+_config.ragioneSociale.toUpperCase()+', '+_config.indirizzo+' – '+_config.cap+' '+_config.citta+' ('+_config.provincia+')</em><br><em>Costruttori del quadro elettrico per bassa tensione secondo CEI EN 61439-1 e CEI EN 61439-2</em></div>'+
   '<div style="text-align:center;font-size:16pt;font-weight:bold;margin:12px 0;">DICHIARA</div>'+
   '<p style="margin:8px 0;font-size:10pt;">sotto la propria responsabilità, che il quadro</p>'+
   infoBoxes(d)+
@@ -765,7 +841,7 @@ function genPage3(d){
   return'<div class="page">'+spacer()+
   '<div class="cert-title" style="font-size:13pt;">RAPPORTO DI PROVA INDIVIDUALE</div>'+
   '<div class="cert-subtitle" style="font-size:11pt;">QUADRI ELETTRICI BT SECONDO CEI EN 61439-1</div>'+
-  '<div class="cert-declaration" style="font-size:9pt;"><em>Noi ELETTROMECCANICA MARINO, Via Col Dei pioppi, 14 – 63074 S. Benedetto del Tr. (Ap)</em><br><em>Costruttori del quadro elettrico per bassa tensione secondo CEI EN 61439-2</em></div>'+
+  '<div class="cert-declaration" style="font-size:9pt;"><em>Noi '+_config.ragioneSociale.toUpperCase()+', '+_config.indirizzo+' – '+_config.cap+' '+_config.citta+' ('+_config.provincia+')</em><br><em>Costruttori del quadro elettrico per bassa tensione secondo CEI EN 61439-2</em></div>'+
   infoBoxes(d)+
   '<div style="text-align:center;font-size:13pt;font-weight:bold;margin:8px 0;">DICHIARIAMO</div>'+
   '<p style="text-align:center;font-size:9pt;margin-bottom:4px;">sotto la nostra responsabilità, di aver effettuato le seguenti Prove Individuali secondo le<br>Norme CEI EN 61439-1 e CEI EN 61439-2</p>'+
@@ -794,7 +870,7 @@ function genPage4(d){
   '<table class="p4-table" style="margin-bottom:12px;">'+
   '<tr><td class="lbl" style="width:140px;">N. Matricola: '+d.matricola+'</td><td colspan="3"><strong>Denominazione Quadro Elettrico:</strong> '+(d.denominazione||'')+'</td></tr>'+
   '<tr><td class="lbl">Riferimento:</td><td colspan="3">'+rifLines+'</td></tr>'+
-  '<tr><td class="lbl">Cablatore del Quadro:</td><td colspan="3">Elettromeccanica Marino - Via Col Dei Pioppi, 14 - 63074 S. Benedetto del Tr. (Ap)</td></tr>'+
+  '<tr><td class="lbl">Cablatore del Quadro:</td><td colspan="3">'+_config.ragioneSociale+' - '+_config.indirizzo+' - '+_config.cap+' '+_config.citta+' ('+_config.provincia+')</td></tr>'+
   '<tr><td class="lbl">Committente:</td><td colspan="3">'+d.committente+(d.indirizzoCommittente?' - '+d.indirizzoCommittente:'')+'</td></tr>'+
   '</table>'+
   '<table class="p4-table" style="width:auto;margin-bottom:5px;">'+

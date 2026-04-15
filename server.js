@@ -75,6 +75,10 @@ app.get('/api/clients', requireAuth, async (req, res) => { try { res.json(await 
 app.put('/api/clients/:key', requireAuth, async (req, res) => { try { await writeOne('clients', req.params.key, req.body); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 app.delete('/api/clients/:key', requireAuth, async (req, res) => { try { await deleteOne('clients', req.params.key); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
 
+// — CONFIG AZIENDA —
+app.get('/api/config', requireAuth, async (req, res) => { try { const d=await readDB('config'); res.json(d.azienda||{}); } catch(e) { res.status(500).json({error:e.message}); } });
+app.put('/api/config', requireAuth, async (req, res) => { try { await writeOne('config','azienda',req.body); res.json({ok:true}); } catch(e) { res.status(500).json({error:e.message}); } });
+
 // — BACKUP —
 app.get('/api/backup', requireAuth, async (req, res) => {
   try {
