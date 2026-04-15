@@ -410,7 +410,7 @@
       </div>
       <h3 style="margin-top:20px;margin-bottom:10px;font-size:14px;color:var(--primary);">Alimentazione Interruttore Generale</h3>
       <div class="checkbox-grid">
-        <div class="checkbox-item"><input type="radio" name="alimGen" id="alimDirettoAnt" value="direttoAnt" checked><label for="alimDirettoAnt">Diretto Anteriore</label></div>
+        <div class="checkbox-item"><input type="radio" name="alimGen" id="alimDirettoAnt" value="direttoAnt"><label for="alimDirettoAnt">Diretto Anteriore</label></div>
         <div class="checkbox-item"><input type="radio" name="alimGen" id="alimDirettoPost" value="direttoPost"><label for="alimDirettoPost">Diretto Posteriore</label></div>
         <div class="checkbox-item"><input type="radio" name="alimGen" id="alimMorsetti" value="morsetti"><label for="alimMorsetti">Da Morsetti</label></div>
         <div class="checkbox-item"><input type="radio" name="alimGen" id="alimPettini" value="pettini"><label for="alimPettini">Da Pettini</label></div>
@@ -745,6 +745,10 @@ document.addEventListener('DOMContentLoaded',function(){
     else{G('loginScreen').classList.add('show');}
   });
   G('regOverlay').addEventListener('click',function(e){if(e.target===G('regOverlay'))closeRegistro()});
+  document.querySelectorAll('input[name="alimGen"]').forEach(function(r){
+    r.addEventListener('mousedown',function(){this._wasChecked=this.checked;});
+    r.addEventListener('click',function(){if(this._wasChecked){this.checked=false;}});
+  });
   G('loginPwd').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   var inp=G('committente');
   inp.addEventListener('input',function(){
@@ -958,7 +962,7 @@ function getData(){
     provaDiel:(document.querySelector('input[name="provaDiel"]:checked')||{}).value||'',
     morsAlto:G('morsAlto').checked,morsBasso:G('morsBasso').checked,
     morsVanoSx:G('morsVanoSx').checked,morsVanoCle:G('morsVanoCle').checked,morsVanoDx:G('morsVanoDx').checked,
-    alimGen:(document.querySelector('input[name="alimGen"]:checked')||{}).value||'direttoAnt',
+    alimGen:(document.querySelector('input[name="alimGen"]:checked')||{}).value||'',
     collPrefab:G('collPrefab').checked,
     progressivo:_progr,
     allegati:{foto:_allegati.foto,schema:_allegati.schema}
@@ -1123,14 +1127,15 @@ function genPage4(d){
   '<span class="construct-option">Sx <span class="box">'+X(d.morsVanoSx)+'</span></span>'+
   '<span class="construct-option">Cle <span class="box">'+X(d.morsVanoCle)+'</span></span>'+
   '<span class="construct-option">Dx <span class="box">'+X(d.morsVanoDx)+'</span></span></div>'+
-  '<div class="construct-row" style="margin-top:12px;"><span class="construct-label">Alim. Interruttore<br>Generale:</span>'+
+  (d.alimGen?'<div class="construct-row" style="margin-top:12px;"><span class="construct-label">Alim. Interruttore<br>Generale:</span>'+
   '<div style="display:flex;flex-direction:column;gap:4px;">'+
   '<span class="construct-option">Diretto Ant. <span class="box">'+X(d.alimGen==='direttoAnt')+'</span></span>'+
   '<span class="construct-option">Diretto Post. <span class="box">'+X(d.alimGen==='direttoPost')+'</span></span></div>'+
   '<div style="display:flex;flex-direction:column;gap:4px;margin-left:15px;">'+
   '<span class="construct-option">Da Morsetti <span class="box">'+X(d.alimGen==='morsetti')+'</span></span>'+
   '<span class="construct-option">Da Pettini <span class="box">'+X(d.alimGen==='pettini')+'</span></span></div>'+
-  '<div style="margin-left:20px;"><span class="construct-option">Collegamento Prefabbricato <span class="box">'+X(d.collPrefab)+'</span></span></div></div>'+
+  '</div>':'')+
+  '<div class="construct-row" style="margin-top:8px;"><span class="construct-option">Collegamento Prefabbricato <span class="box">'+X(d.collPrefab)+'</span></span></div>'+
   footer(d,'IL LEGALE RAPPRESENTANTE')+
   '</div>';
 }
@@ -1305,7 +1310,8 @@ function resetForm(){
   ['accRetro','accFronteFianchi','accTotale','morsAlto','morsBasso','morsVanoSx','morsVanoCle','morsVanoDx','collPrefab']
     .forEach(function(f){G(f).checked=false});
   for(var i=1;i<=8;i++)G('prova'+i).checked=true;
-  G('dielA').checked=false;G('dielB').checked=false;G('dielC').checked=false;G('alimDirettoAnt').checked=true;
+  G('dielA').checked=false;G('dielB').checked=false;G('dielC').checked=false;
+  document.querySelectorAll('input[name="alimGen"]').forEach(function(r){r.checked=false;});
   G('previewContainer').innerHTML='';_progr=null;_certKey=null;_matEdited=false;G('matricola').value='';
   _allegati={foto:[],schema:null};renderFotoGrid();renderSchemaInfo();refreshBadge();
 }
