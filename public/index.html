@@ -426,7 +426,10 @@
         <div class="form-group"><label>Provincia</label><input type="text" id="cfg_provincia" placeholder="Es. Ap" maxlength="5"></div>
         <div class="form-group"><label>Sigla Logo (2-3 lettere)</label><input type="text" id="cfg_logoLetters" placeholder="Es. EM" maxlength="3"></div>
       </div>
-      <button class="btn btn-success" onclick="saveConfig(false)" style="margin-top:8px;">💾 Salva Impostazioni</button>
+      <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+        <button class="btn btn-success" onclick="saveConfig(false)">💾 Salva Impostazioni</button>
+        <button id="btnResetDemo" class="btn" style="background:#e65100;color:#fff;display:none;" onclick="resetConfig()">🔄 Reimposta configurazione</button>
+      </div>
     </div>
   </div>
 
@@ -449,6 +452,7 @@
 'use strict';
 var acIndex=-1,_progr=null,_certKey=null,_matEdited=false;
 var _clients={},_certs={},_registro={};
+var _accountType='main';
 var _config={ragioneSociale:'Elettromeccanica Marino',indirizzo:'Via Col Dei pioppi, 14',cap:'63074',citta:'S. Benedetto del Tr.',provincia:'Ap',logoLetters:'EM'};
 
 function G(id){return document.getElementById(id)}
@@ -505,6 +509,7 @@ function applyConfig(){
   ['ragioneSociale','indirizzo','cap','citta','provincia','logoLetters'].forEach(function(f){
     var el=G('cfg_'+f);if(el&&!el.dataset.dirty)el.value=_config[f]||'';
   });
+  if(G('btnResetDemo'))G('btnResetDemo').style.display=_accountType==='demo'?'':'none';
 }
 function saveConfig(closeModal){
   var c={
@@ -526,13 +531,13 @@ function saveConfig(closeModal){
 function showFirstRunModal(){G('firstRunOverlay').classList.add('open');}
 function closeFirstRunModal(){G('firstRunOverlay').classList.remove('open');}
 function resetConfig(){
-  if(!confirm('Cancella la configurazione azienda e mostra il modal di primo accesso?\n(Utile per simulare una nuova installazione)'))return;
+  if(!confirm('Reimposta la configurazione azienda?\nIl modal di configurazione comparirà di nuovo al prossimo accesso.'))return;
   fetch('/api/config',{method:'DELETE'}).then(function(){location.reload();});
 }
 
 document.addEventListener('DOMContentLoaded',function(){
   fetch('/api/me').then(function(r){return r.json()}).then(function(d){
-    if(d.auth){initApp();}
+    if(d.auth){_accountType=d.type||'main';initApp();}
     else{G('loginScreen').classList.add('show');}
   });
   G('regOverlay').addEventListener('click',function(e){if(e.target===G('regOverlay'))closeRegistro()});

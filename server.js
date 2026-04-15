@@ -66,7 +66,9 @@ app.post('/api/login', (req, res) => {
 app.post('/api/logout', (req, res) => { res.clearCookie('auth'); res.json({ ok: true }); });
 app.get('/api/me', (req, res) => {
   const auth = req.signedCookies && req.signedCookies.auth;
-  res.json({ auth: auth === 'ok' || auth === 'demo' });
+  if (auth === 'ok')   return res.json({ auth: true,  type: 'main' });
+  if (auth === 'demo') return res.json({ auth: true,  type: 'demo' });
+  res.json({ auth: false });
 });
 
 // — CERTIFICATI —
