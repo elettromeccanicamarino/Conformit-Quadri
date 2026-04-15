@@ -499,11 +499,18 @@ function switchTabById(tabId){
 function nextMatricola(){
   var mats=Object.values(_certs).map(function(c){return(c.matricola||'').trim()}).filter(Boolean);
   var parsed=[];
-  // Solo formato LETTERA/NUMERO (es. B/147) — esclude 048/2026 che inizia con cifra
-  mats.forEach(function(m){var match=m.match(/^([A-Za-z][^\/]*\/)(\d+)$/);if(match)parsed.push({prefix:match[1],num:parseInt(match[2],10)});});
+  // Formato: LETTERE + NUMERO + / + ANNO  (es. B192/26, B192/2026)
+  // La LETTERA è il prefisso, il NUMERO è progressivo, l'anno resta uguale
+  mats.forEach(function(m){
+    var match=m.match(/^([A-Za-z]+)(\d+)\/(\d+)$/);
+    if(match)parsed.push({letters:match[1],num:parseInt(match[2],10),yearLen:match[3].length});
+  });
   if(!parsed.length)return null;
   parsed.sort(function(a,b){return b.num-a.num;});
-  return parsed[0].prefix+(parsed[0].num+1);
+  var last=parsed[0];
+  var yr=new Date().getFullYear();
+  var yearStr=last.yearLen<=2?String(yr).slice(-2):String(yr);
+  return last.letters+(last.num+1)+'/'+yearStr;
 }
 
 /* ===== PROGRESSIVO ===== */
