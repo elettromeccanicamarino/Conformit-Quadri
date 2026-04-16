@@ -767,6 +767,13 @@ function resetConfig(){
 }
 
 document.addEventListener('DOMContentLoaded',function(){
+  if(new URLSearchParams(window.location.search).has('demo')){
+    fetch('/api/demo-login',{method:'POST'}).then(function(r){return r.json()}).then(function(d){
+      if(d.ok){history.replaceState(null,'','/');_accountType='demo';initApp();}
+      else G('loginScreen').classList.add('show');
+    });
+    return;
+  }
   if(_setupToken){
     fetch('/api/setup?token='+encodeURIComponent(_setupToken))
       .then(function(r){return r.json()}).then(function(d){

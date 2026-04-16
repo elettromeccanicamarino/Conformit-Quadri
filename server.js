@@ -44,14 +44,14 @@ async function deleteOne(collection, key) {
 app.use(express.json({ limit: '25mb' }));
 app.use(cookieParser(SECRET));
 
-// — DEMO (prima di static, altrimenti viene intercettata) —
-app.get('/demo', (req, res) => {
+app.use(express.static(path.join(__dirname, 'public')));
+
+// — DEMO LOGIN (via API, non intercettato da static) —
+app.post('/api/demo-login', (req, res) => {
   const cookieOpts = { signed: true, httpOnly: true, maxAge: 2*60*60*1000, sameSite: 'lax' };
   res.cookie('auth', 'demo|demo_', cookieOpts);
-  res.redirect('/');
+  res.json({ ok: true });
 });
-
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Cookie format: "type|prefix"
 // Backward compat: 'ok' = main, 'demo' = demo
