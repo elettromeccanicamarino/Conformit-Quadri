@@ -768,9 +768,8 @@ function resetConfig(){
 
 document.addEventListener('DOMContentLoaded',function(){
   if(new URLSearchParams(window.location.search).has('demo')){
-    fetch('/api/demo-login',{method:'POST'}).then(function(r){return r.json()}).then(function(d){
-      if(d.ok){history.replaceState(null,'','/');_accountType='demo';initApp();}
-      else G('loginScreen').classList.add('show');
+    fetch('/api/demo-login',{method:'POST',credentials:'same-origin'}).then(function(){
+      window.location.href='/';
     });
     return;
   }
