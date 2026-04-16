@@ -42,8 +42,16 @@ async function deleteOne(collection, key) {
 
 // — middleware —
 app.use(express.json({ limit: '25mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
 app.use(cookieParser(SECRET));
+
+// — DEMO (prima di static, altrimenti viene intercettata) —
+app.get('/demo', (req, res) => {
+  const cookieOpts = { signed: true, httpOnly: true, maxAge: 2*60*60*1000, sameSite: 'lax' };
+  res.cookie('auth', 'demo|demo_', cookieOpts);
+  res.redirect('/');
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Cookie format: "type|prefix"
 // Backward compat: 'ok' = main, 'demo' = demo
@@ -205,13 +213,6 @@ app.post('/api/import', requireAuth, async (req, res) => {
     if (em_clients)  for (const [k,v] of Object.entries(em_clients))  await writeOne(p+'clients', k, v);
     res.json({ ok: true });
   } catch(e) { res.status(500).json({error:e.message}); }
-});
-
-// — DEMO (accesso diretto senza password) —
-app.get('/demo', (req, res) => {
-  const cookieOpts = { signed: true, httpOnly: true, maxAge: 2*60*60*1000, sameSite: 'lax' };
-  res.cookie('auth', 'demo|demo_', cookieOpts);
-  res.redirect('/');
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
