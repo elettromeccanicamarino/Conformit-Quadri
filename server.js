@@ -207,5 +207,12 @@ app.post('/api/import', requireAuth, async (req, res) => {
   } catch(e) { res.status(500).json({error:e.message}); }
 });
 
+// — DEMO (accesso diretto senza password) —
+app.get('/demo', (req, res) => {
+  const cookieOpts = { signed: true, httpOnly: true, maxAge: 2*60*60*1000, sameSite: 'lax' };
+  res.cookie('auth', 'demo|demo_', cookieOpts);
+  res.redirect('/');
+});
+
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(PORT, '0.0.0.0', () => console.log(`Marino App avviata sulla porta ${PORT}`));
