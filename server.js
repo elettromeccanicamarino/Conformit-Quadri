@@ -8,6 +8,7 @@ const { Client } = require('pg');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const APP_PASSWORD = process.env.APP_PASSWORD || 'marino2026';
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'demo2026';
 const SECRET = process.env.SESSION_SECRET || 'em-marino-secret-2026';
 
 function hashPwd(p) { return crypto.createHash('sha256').update(p + SECRET).digest('hex'); }
@@ -66,6 +67,10 @@ app.post('/api/login', async (req, res) => {
   const cookieOpts = { signed: true, httpOnly: true, maxAge: 7*24*60*60*1000, sameSite: 'lax' };
   if (pwd === APP_PASSWORD) {
     res.cookie('auth', 'main|', cookieOpts);
+    return res.json({ ok: true });
+  }
+  if (pwd === DEMO_PASSWORD) {
+    res.cookie('auth', 'demo|demo_', cookieOpts);
     return res.json({ ok: true });
   }
   // Cerca negli account clienti

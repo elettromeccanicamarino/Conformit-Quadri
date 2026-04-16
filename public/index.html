@@ -167,6 +167,8 @@
       .stamp-box{border:none !important;background:transparent !important;color:transparent !important}
       @page{size:A4;margin:0}
     }
+    .demo-lock.demo-active{background:linear-gradient(135deg,#757575,#9e9e9e) !important;opacity:.75;cursor:not-allowed !important;position:relative;}
+    .demo-lock.demo-active::after{content:'🔒';position:absolute;top:4px;right:6px;font-size:11px;}
     @media (max-width:768px){
       .form-grid{grid-template-columns:1fr}
       .app-header{flex-direction:column;text-align:center}
@@ -213,6 +215,34 @@
     <p id="headerSubtitle">CEI EN 61439-1 / CEI EN 61439-2 — Elettromeccanica Marino</p>
   </div>
   <button class="logout-btn" onclick="doLogout()">🚪 Esci</button>
+</div>
+
+<!-- BANNER DEMO -->
+<div id="demoBanner" style="display:none;background:linear-gradient(135deg,#e65100,#ff8f00);color:#fff;text-align:center;padding:10px 20px;font-size:14px;font-weight:700;letter-spacing:.5px;">
+  🔒 MODALITÀ DEMO — Anteprima disponibile. Stampa, salvataggio ed esportazione disabilitati.
+  &nbsp;&nbsp;<button onclick="showPurchaseModal()" style="background:#fff;color:#e65100;border:none;border-radius:6px;padding:5px 14px;font-size:13px;font-weight:700;cursor:pointer;">💳 Acquista la Licenza</button>
+</div>
+
+<!-- MODAL ACQUISTO LICENZA -->
+<div class="reg-overlay" id="purchaseOverlay" style="align-items:center;padding:20px;">
+  <div class="reg-modal" style="max-width:460px;width:100%;max-height:95vh;display:flex;flex-direction:column;">
+    <div class="reg-head" style="flex-shrink:0;background:linear-gradient(135deg,#1a237e,#3949ab);">
+      <h2>🔒 Versione Demo</h2>
+      <button class="close-btn" onclick="G('purchaseOverlay').classList.remove('open')">✕ Chiudi</button>
+    </div>
+    <div style="padding:28px 24px;text-align:center;flex:1;">
+      <div style="font-size:48px;margin-bottom:16px;">📋</div>
+      <h3 style="color:#1a237e;font-size:20px;margin-bottom:10px;">Stai usando la versione demo</h3>
+      <p style="color:#555;font-size:14px;line-height:1.6;margin-bottom:20px;">Nella versione completa puoi:<br>
+        <strong>✅ Stampare e salvare come PDF</strong><br>
+        <strong>✅ Salvare i certificati nell'archivio</strong><br>
+        <strong>✅ Esportare e importare i dati</strong><br>
+        <strong>✅ Allegare foto e schemi elettrici</strong><br>
+        <strong>✅ Gestire la rubrica clienti</strong>
+      </p>
+      <p style="color:#e65100;font-weight:700;font-size:15px;">Contatta Elettromeccanica Marino per acquistare la licenza.</p>
+    </div>
+  </div>
 </div>
 
 <div class="notification" id="notification"></div>
@@ -520,12 +550,12 @@
 
   <div class="btn-container">
     <button class="btn btn-primary"  onclick="generatePreview()">👁 Anteprima</button>
-    <button class="btn btn-success"  onclick="printCert()">🖨 Stampa / PDF</button>
-    <button class="btn btn-outline"  onclick="saveCert()">💾 Salva Certificato</button>
-    <button class="btn" style="background:linear-gradient(135deg,#37474f,#546e7a);color:#fff;" onclick="saveZip()">📦 Salva ZIP</button>
+    <button class="btn btn-success demo-lock"  onclick="printCert()">🖨 Stampa / PDF</button>
+    <button class="btn btn-outline demo-lock"  onclick="saveCert()">💾 Salva Certificato</button>
+    <button class="btn demo-lock" style="background:linear-gradient(135deg,#37474f,#546e7a);color:#fff;" onclick="saveZip()">📦 Salva ZIP</button>
     <button class="btn btn-registro" onclick="openRegistro()">📋 Registro</button>
-    <button class="btn" style="background:linear-gradient(135deg,#00695c,#00897b);color:#fff;" onclick="exportData()">📤 Esporta</button>
-    <button class="btn" style="background:linear-gradient(135deg,#4527a0,#7e57c2);color:#fff;" onclick="G('importFile').click()">📥 Importa</button>
+    <button class="btn demo-lock" style="background:linear-gradient(135deg,#00695c,#00897b);color:#fff;" onclick="exportData()">📤 Esporta</button>
+    <button class="btn demo-lock" style="background:linear-gradient(135deg,#4527a0,#7e57c2);color:#fff;" onclick="G('importFile').click()">📥 Importa</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
     <button class="btn btn-danger"   onclick="resetForm()">↺ Reset</button>
     <button class="btn" style="background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;" onclick="resetForm();notify('Nuovo certificato pronto!')">✚ Nuovo Certificato</button>
@@ -615,6 +645,9 @@ function applyConfig(){
   if(G('btnResetDemo'))G('btnResetDemo').style.display=_accountType==='demo'?'':'none';
   if(G('sectionAdmin'))G('sectionAdmin').style.display=_accountType==='main'?'':'none';
   if(G('sectionCambiaPwd'))G('sectionCambiaPwd').style.display=_accountType==='client'?'':'none';
+  var isDemo=_accountType==='demo';
+  if(G('demoBanner'))G('demoBanner').style.display=isDemo?'':'none';
+  document.querySelectorAll('.demo-lock').forEach(function(b){b.classList.toggle('demo-active',isDemo);});
   if(_config.logo){
     if(G('cfg_logoPreview')){G('cfg_logoPreview').src=_config.logo;G('cfg_logoPreview').style.display='';}
     if(G('btnRemoveLogo'))G('btnRemoveLogo').style.display='';
@@ -922,11 +955,16 @@ function selectAC(key){var c=_clients[key];if(!c)return;G('committente').value=c
 function deleteClientAC(key){if(!confirm('Eliminare dalla rubrica?'))return;apiDel('/api/clients/'+key).then(function(){delete _clients[key];hideAC();})}
 
 /* ===== ESPORTA / IMPORTA ===== */
+function showPurchaseModal(){G('purchaseOverlay').classList.add('open');}
+function demoGuard(){if(_accountType==='demo'){showPurchaseModal();return true;}return false;}
+
 function exportData(){
+  if(demoGuard())return;
   window.location.href='/api/backup';
   notify('Download backup in corso ✓');
 }
 function importData(input){
+  if(demoGuard()){input.value='';return;}
   var file=input.files[0];if(!file)return;
   var reader=new FileReader();
   reader.onload=function(e){
@@ -1153,6 +1191,7 @@ function generatePreview(){
   notify('Anteprima 4 pagine generata');
 }
 function printCert(){
+  if(demoGuard())return;
   var d=getData();
   var c=G('previewContainer');
   if(!c.innerHTML.trim())c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
@@ -1161,6 +1200,7 @@ function printCert(){
 
 /* ===== SALVA ZIP ===== */
 function saveZip(){
+  if(demoGuard())return;
   if(typeof JSZip==='undefined'||typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){
     notify('Librerie non ancora caricate, riprova tra un secondo','error');return;
   }
@@ -1208,6 +1248,7 @@ function saveZip(){
 
 /* ===== SALVA ===== */
 function saveCert(){
+  if(demoGuard())return;
   var d=getData();
   if(!d.matricola){notify('Inserisci la matricola quadro','error');return;}
   if(!_progr)_progr=nextProgr();
