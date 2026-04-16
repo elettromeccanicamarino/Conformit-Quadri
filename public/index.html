@@ -1138,8 +1138,10 @@ function genPage4(d){
   '<div style="display:flex;flex-direction:column;gap:4px;margin-left:15px;">'+
   '<span class="construct-option">Da Morsetti <span class="box">'+X(d.alimGen==='morsetti')+'</span></span>'+
   '<span class="construct-option">Da Pettini <span class="box">'+X(d.alimGen==='pettini')+'</span></span></div>'+
-  '</div>':'')+
-  '<div class="construct-row" style="margin-top:8px;"><span class="construct-option">Collegamento Prefabbricato <span class="box">'+X(d.collPrefab)+'</span></span></div>'+
+  '<div style="display:flex;flex-direction:column;gap:4px;margin-left:15px;">'+
+  '<span class="construct-option">Coll. Prefabbricato <span class="box">'+X(d.collPrefab)+'</span></span>'+
+  '</div></div>':
+  '<div class="construct-row" style="margin-top:8px;"><span class="construct-option">Collegamento Prefabbricato <span class="box">'+X(d.collPrefab)+'</span></span></div>')+
   footer(d,'IL LEGALE RAPPRESENTANTE')+
   '</div>';
 }
