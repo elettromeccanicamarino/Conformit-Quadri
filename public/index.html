@@ -175,6 +175,9 @@
       .info-layout{flex-direction:column}
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 
@@ -519,6 +522,7 @@
     <button class="btn btn-primary"  onclick="generatePreview()">👁 Anteprima</button>
     <button class="btn btn-success"  onclick="printCert()">🖨 Stampa / PDF</button>
     <button class="btn btn-outline"  onclick="saveCert()">💾 Salva Certificato</button>
+    <button class="btn" style="background:linear-gradient(135deg,#37474f,#546e7a);color:#fff;" onclick="saveZip()">📦 Salva ZIP</button>
     <button class="btn btn-registro" onclick="openRegistro()">📋 Registro</button>
     <button class="btn" style="background:linear-gradient(135deg,#00695c,#00897b);color:#fff;" onclick="exportData()">📤 Esporta</button>
     <button class="btn" style="background:linear-gradient(135deg,#4527a0,#7e57c2);color:#fff;" onclick="G('importFile').click()">📥 Importa</button>
@@ -1152,6 +1156,53 @@ function printCert(){
   var c=G('previewContainer');
   if(!c.innerHTML.trim())c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
   setTimeout(function(){window.print()},300);
+}
+
+/* ===== SALVA ZIP ===== */
+function saveZip(){
+  if(typeof JSZip==='undefined'||typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){
+    notify('Librerie non ancora caricate, riprova tra un secondo','error');return;
+  }
+  var d=getData();
+  var mat=(d.matricola||'certificato').replace(/[\\/:*?"<>|]/g,'_');
+  var c=G('previewContainer');
+  c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
+  var pages=Array.from(c.querySelectorAll('.page'));
+  if(!pages.length){notify('Nessun certificato da esportare','error');return;}
+  notify('Generazione ZIP in corso...');
+  var capturePromises=pages.map(function(page){
+    return html2canvas(page,{scale:2,useCORS:true,logging:false,backgroundColor:'#ffffff'});
+  });
+  Promise.all(capturePromises).then(function(canvases){
+    var jsPDF=window.jspdf.jsPDF;
+    var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    canvases.forEach(function(canvas,i){
+      if(i>0)pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,210,297);
+    });
+    var zip=new JSZip();
+    zip.file(mat+'.pdf',pdf.output('datauristring').split(',')[1],{base64:true});
+    if(_allegati.foto&&_allegati.foto.length){
+      var fFolder=zip.folder('foto');
+      _allegati.foto.forEach(function(f,i){
+        var ext=(f.name.split('.').pop()||'jpg').toLowerCase();
+        fFolder.file('foto_'+(i+1)+'.'+ext,f.data.split(',')[1],{base64:true});
+      });
+    }
+    if(_allegati.schema){
+      var ext2=(_allegati.schema.name.split('.').pop()||'pdf').toLowerCase();
+      zip.file('schema_elettrico.'+ext2,_allegati.schema.data.split(',')[1],{base64:true});
+    }
+    return zip.generateAsync({type:'blob'});
+  }).then(function(blob){
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=mat+'_archivio.zip';
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    notify('ZIP scaricato!');
+  }).catch(function(e){notify('Errore generazione ZIP','error');console.error(e);});
 }
 
 /* ===== SALVA ===== */
