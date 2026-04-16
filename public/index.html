@@ -1131,7 +1131,7 @@ function genPage4(d){
   '<span class="construct-option">Sx <span class="box">'+X(d.morsVanoSx)+'</span></span>'+
   '<span class="construct-option">Cle <span class="box">'+X(d.morsVanoCle)+'</span></span>'+
   '<span class="construct-option">Dx <span class="box">'+X(d.morsVanoDx)+'</span></span></div>'+
-  (d.alimGen?'<div class="construct-row" style="margin-top:12px;"><span class="construct-label">Alim. Interruttore<br>Generale:</span>'+
+  '<div class="construct-row" style="margin-top:12px;"><span class="construct-label">Alim. Interruttore<br>Generale:</span>'+
   '<div style="display:flex;flex-direction:column;gap:4px;">'+
   '<span class="construct-option">Diretto Ant. <span class="box">'+X(d.alimGen==='direttoAnt')+'</span></span>'+
   '<span class="construct-option">Diretto Post. <span class="box">'+X(d.alimGen==='direttoPost')+'</span></span></div>'+
@@ -1140,8 +1140,7 @@ function genPage4(d){
   '<span class="construct-option">Da Pettini <span class="box">'+X(d.alimGen==='pettini')+'</span></span></div>'+
   '<div style="display:flex;flex-direction:column;gap:4px;margin-left:15px;">'+
   '<span class="construct-option">Coll. Prefabbricato <span class="box">'+X(d.collPrefab)+'</span></span>'+
-  '</div></div>':
-  '<div class="construct-row" style="margin-top:8px;"><span class="construct-option">Collegamento Prefabbricato <span class="box">'+X(d.collPrefab)+'</span></span></div>')+
+  '</div></div>'+
   footer(d,'IL LEGALE RAPPRESENTANTE')+
   '</div>';
 }
