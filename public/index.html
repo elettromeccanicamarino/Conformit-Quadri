@@ -555,7 +555,7 @@
   <div class="btn-container">
     <button class="btn btn-primary"  onclick="generatePreview()">👁 Anteprima</button>
     <button class="btn btn-success demo-lock"  onclick="printCert()">🖨 Stampa / PDF</button>
-    <button class="btn btn-outline demo-lock"  onclick="saveCert()">💾 Salva Certificato</button>
+    <button class="btn btn-outline"  onclick="saveCert()">💾 Salva Certificato</button>
     <button class="btn demo-lock" style="background:linear-gradient(135deg,#37474f,#546e7a);color:#fff;" onclick="saveZip()">📦 Salva ZIP</button>
     <button class="btn btn-registro" onclick="openRegistro()">📋 Registro</button>
     <button class="btn demo-lock" style="background:linear-gradient(135deg,#00695c,#00897b);color:#fff;" onclick="exportData()">📤 Esporta</button>
@@ -573,6 +573,7 @@
 var acIndex=-1,_progr=null,_certKey=null,_matEdited=false;
 var _clients={},_certs={},_registro={};
 var _accountType='main';
+var _demoSaveCount=0;
 var _setupToken=new URLSearchParams(window.location.search).get('token');
 var _allegati={foto:[],schema:null};
 var _config={ragioneSociale:'Elettromeccanica Marino',indirizzo:'Via Col Dei pioppi, 14',cap:'63074',citta:'S. Benedetto del Tr.',provincia:'Ap',logoLetters:'EM',logo:''};
@@ -628,8 +629,11 @@ function initApp(){
     .then(function(results){
       _certs=results[0];_registro=results[1];_clients=results[2];
       var cfg=results[3];
-      if(cfg&&cfg.ragioneSociale)Object.assign(_config,cfg);
-      else if(_accountType==='demo')Object.assign(_config,{ragioneSociale:'',indirizzo:'',cap:'',citta:'',provincia:'',logoLetters:'',logo:''});
+      if(_accountType==='demo'){
+        Object.assign(_config,{ragioneSociale:'',indirizzo:'',cap:'',citta:'',provincia:'',logoLetters:'',logo:''});
+      } else if(cfg&&cfg.ragioneSociale){
+        Object.assign(_config,cfg);
+      }
       applyConfig();
       G('dataCert').value=new Date().toISOString().split('T')[0];
       G('annoMarcatura').value=new Date().getFullYear();
@@ -1268,7 +1272,7 @@ function saveZip(){
 
 /* ===== SALVA ===== */
 function saveCert(){
-  if(demoGuard())return;
+  if(_accountType==='demo'&&_demoSaveCount>=1){showPurchaseModal();return;}
   var d=getData();
   if(!d.matricola){notify('Inserisci la matricola quadro','error');return;}
   if(!_progr)_progr=nextProgr();
@@ -1282,6 +1286,7 @@ function saveCert(){
   Promise.all([apiPut('/api/certs/'+_certKey,d),apiPut('/api/registro/'+regId,regEntry)])
     .then(function(){
       _certs[_certKey]=d;_registro[regId]=regEntry;
+      if(_accountType==='demo')_demoSaveCount++;
       loadCertList();refreshBadge();
       notify('Salvato — N° '+fmtP(_progr.num,_progr.year));
     }).catch(function(){notify('Errore salvataggio','error');});
