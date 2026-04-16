@@ -629,27 +629,37 @@ function initApp(){
       _certs=results[0];_registro=results[1];_clients=results[2];
       var cfg=results[3];
       if(cfg&&cfg.ragioneSociale)Object.assign(_config,cfg);
+      else if(_accountType==='demo')Object.assign(_config,{ragioneSociale:'',indirizzo:'',cap:'',citta:'',provincia:'',logoLetters:'',logo:''});
       applyConfig();
       G('dataCert').value=new Date().toISOString().split('T')[0];
       G('annoMarcatura').value=new Date().getFullYear();
       loadCertList();refreshBadge();
-      if(!cfg||!cfg.ragioneSociale)G('firstRunOverlay').classList.add('open');
+      if(!cfg||!cfg.ragioneSociale){if(_accountType!=='demo')G('firstRunOverlay').classList.add('open');}
     }).catch(function(){notify('Errore caricamento dati','error');});
 }
 function applyConfig(){
-  var logo=_config.logoLetters||_config.ragioneSociale.split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase();
+  var isDemo=_accountType==='demo';
+  var rag=_config.ragioneSociale||'';
+  var logo=_config.logoLetters||(rag?rag.split(' ').map(function(w){return w[0]}).join('').slice(0,2).toUpperCase():'CQ');
   G('logoCircle').textContent=logo;
   G('logoCircleLogin').textContent=logo;
-  G('loginRagSoc').textContent=_config.ragioneSociale;
-  G('headerSubtitle').textContent='CEI EN 61439-1 / CEI EN 61439-2 — '+_config.ragioneSociale;
-  document.title=_config.ragioneSociale+' — Certificati di Conformità';
+  G('loginRagSoc').textContent=rag||'Conformità Quadri';
+  G('headerSubtitle').textContent='CEI EN 61439-1 / CEI EN 61439-2'+(rag?' — '+rag:'');
+  document.title=(rag||'Conformità Quadri')+' — Certificati di Conformità';
   ['ragioneSociale','indirizzo','cap','citta','provincia','logoLetters'].forEach(function(f){
     var el=G('cfg_'+f);if(el&&!el.dataset.dirty)el.value=_config[f]||'';
   });
-  if(G('btnResetDemo'))G('btnResetDemo').style.display=_accountType==='demo'?'':'none';
+  if(isDemo){
+    document.querySelectorAll('#cfg_ragioneSociale').forEach(function(el){el.placeholder='Es. Rossi Impianti Srl';});
+    document.querySelectorAll('#cfg_indirizzo').forEach(function(el){el.placeholder='Es. Via Roma, 10';});
+    document.querySelectorAll('#cfg_cap').forEach(function(el){el.placeholder='Es. 00100';});
+    document.querySelectorAll('#cfg_citta').forEach(function(el){el.placeholder='Es. Roma';});
+    document.querySelectorAll('#cfg_provincia').forEach(function(el){el.placeholder='Es. RM';});
+    document.querySelectorAll('#cfg_logoLetters').forEach(function(el){el.placeholder='Es. RS';});
+  }
+  if(G('btnResetDemo'))G('btnResetDemo').style.display=isDemo?'':'none';
   if(G('sectionAdmin'))G('sectionAdmin').style.display=_accountType==='main'?'':'none';
   if(G('sectionCambiaPwd'))G('sectionCambiaPwd').style.display=_accountType==='client'?'':'none';
-  var isDemo=_accountType==='demo';
   if(G('demoBanner'))G('demoBanner').style.display=isDemo?'':'none';
   document.querySelectorAll('.demo-lock').forEach(function(b){b.classList.toggle('demo-active',isDemo);});
   if(_config.logo){
