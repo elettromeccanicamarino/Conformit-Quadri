@@ -1093,13 +1093,15 @@ function spacer(){
 function infoBoxes(d){
   var rif=d.denominazione||'';
   if(d.riferimento){var lines=d.riferimento.split('\n').map(function(l){return l.trim()}).filter(function(l){return l});if(rif&&lines.length)rif+='<br>';rif+=lines.join('<br>')}
-  var bdr='border:1.5px solid #000;';
-  var lbl='background:#b8d4e8;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#000;font-size:9pt;font-weight:bold;padding:4px 8px;text-align:center;border-bottom:1.5px solid #000;';
-  return'<div style="display:flex;gap:8px;margin:8px 0;">'+
-    '<div style="width:30%;'+bdr+'"><div style="'+lbl+'">MATRICOLA QUADRO</div><div style="padding:10px 8px;text-align:center;font-size:12pt;font-weight:bold;">'+(d.matricola||'')+'</div></div>'+
-    '<div style="width:32%;'+bdr+'"><div style="'+lbl+'">COMMITTENTE</div><div style="padding:10px 8px;text-align:center;font-size:13pt;">'+(d.committente||'')+'</div></div>'+
-    '<div style="flex:1;'+bdr+'"><div style="'+lbl+'">RIFERIMENTO</div><div style="padding:10px 8px;text-align:center;font-size:13pt;">'+(rif||'')+'</div></div>'+
-  '</div>';
+  var lbl='display:block;background:#b8d4e8;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#000;font-size:9pt;font-weight:bold;padding:4px 8px;text-align:center;border-bottom:1.5px solid #000;';
+  var td='border:1.5px solid #000;padding:0;vertical-align:top;';
+  return'<table style="width:100%;border-collapse:collapse;margin:8px 0;">'+
+    '<tr>'+
+    '<td style="width:30%;'+td+'"><div style="'+lbl+'">MATRICOLA QUADRO</div><div style="padding:10px 8px;text-align:center;font-size:12pt;font-weight:bold;">'+(d.matricola||'')+'</div></td>'+
+    '<td style="width:32%;'+td+'"><div style="'+lbl+'">COMMITTENTE</div><div style="padding:10px 8px;text-align:center;font-size:13pt;">'+(d.committente||'')+'</div></td>'+
+    '<td style="'+td+'"><div style="'+lbl+'">RIFERIMENTO</div><div style="padding:10px 8px;text-align:center;font-size:13pt;">'+(rif||'')+'</div></td>'+
+    '</tr>'+
+  '</table>';
 }
 function footer(d,title){
   title=title||'IL LEGALE RAPPRESENTANTE';
