@@ -555,7 +555,8 @@
 
   <div class="btn-container">
     <button class="btn btn-primary"  onclick="generatePreview()">👁 Anteprima</button>
-    <button class="btn btn-success demo-lock"  onclick="printCert()">🖨 Stampa / PDF</button>
+    <button class="btn btn-success demo-lock"  onclick="savePDF()">📄 Salva PDF</button>
+    <button class="btn demo-lock" style="background:linear-gradient(135deg,#1565c0,#1976d2);color:#fff;" onclick="printCert()">🖨 Stampa</button>
     <button class="btn btn-outline"  onclick="saveCert()">💾 Salva Certificato</button>
     <button class="btn demo-lock" style="background:linear-gradient(135deg,#37474f,#546e7a);color:#fff;" onclick="saveZip()">📦 Salva ZIP</button>
     <button class="btn btn-registro" onclick="openRegistro()">📋 Registro</button>
@@ -1222,6 +1223,34 @@ function printCert(){
   var c=G('previewContainer');
   if(!c.innerHTML.trim())c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
   setTimeout(function(){window.print()},300);
+}
+
+/* ===== SALVA PDF ===== */
+function savePDF(){
+  if(demoGuard())return;
+  if(typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){notify('Librerie non ancora caricate, riprova tra un secondo','error');return;}
+  var d=getData();
+  var mat=(d.matricola||'certificato').replace(/[\\/:*?"<>|]/g,'_');
+  var c=G('previewContainer');
+  c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
+  var pages=Array.from(c.querySelectorAll('.page'));
+  if(!pages.length){notify('Nessun certificato da esportare','error');return;}
+  notify('Generazione PDF in corso...');
+  Promise.all(pages.map(function(p){return html2canvas(p,{scale:2,useCORS:true,logging:false,backgroundColor:'#ffffff'});}))
+    .then(function(canvases){
+      var jsPDF=window.jspdf.jsPDF;
+      var pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+      canvases.forEach(function(canvas,i){
+        if(i>0)pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,210,297);
+      });
+      var a=document.createElement('a');
+      a.href=pdf.output('bloburi');
+      a.download=mat+'.pdf';
+      document.body.appendChild(a);a.click();
+      document.body.removeChild(a);
+      notify('PDF scaricato!');
+    }).catch(function(e){notify('Errore generazione PDF','error');console.error(e);});
 }
 
 /* ===== SALVA ZIP ===== */
