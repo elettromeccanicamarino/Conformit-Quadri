@@ -383,9 +383,9 @@
       </div>
       <h3 style="margin-top:20px;margin-bottom:10px;font-size:14px;color:var(--primary);">Prova Dielettrica</h3>
       <div class="checkbox-grid">
-        <div class="checkbox-item"><input type="radio" name="provaDiel" id="dielA" value="a"><label for="dielA">a) Tenuta freq. esercizio</label></div>
-        <div class="checkbox-item"><input type="radio" name="provaDiel" id="dielB" value="b"><label for="dielB">b) Tenuta a impulso</label></div>
-        <div class="checkbox-item"><input type="radio" name="provaDiel" id="dielC" value="c"><label for="dielC">c) Resistenza isolamento</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="dielA"><label for="dielA">a) Tenuta freq. esercizio</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="dielB"><label for="dielB">b) Tenuta a impulso</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="dielC"><label for="dielC">c) Resistenza isolamento</label></div>
       </div>
     </div>
 
@@ -487,10 +487,10 @@
       </div>
       <h3 style="margin-top:20px;margin-bottom:10px;font-size:14px;color:var(--primary);">Alimentazione Interruttore Generale</h3>
       <div class="checkbox-grid">
-        <div class="checkbox-item"><input type="radio" name="alimGen" id="alimDirettoAnt" value="direttoAnt"><label for="alimDirettoAnt">Diretto Anteriore</label></div>
-        <div class="checkbox-item"><input type="radio" name="alimGen" id="alimDirettoPost" value="direttoPost"><label for="alimDirettoPost">Diretto Posteriore</label></div>
-        <div class="checkbox-item"><input type="radio" name="alimGen" id="alimMorsetti" value="morsetti"><label for="alimMorsetti">Da Morsetti</label></div>
-        <div class="checkbox-item"><input type="radio" name="alimGen" id="alimPettini" value="pettini"><label for="alimPettini">Da Pettini</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="alimDirettoAnt"><label for="alimDirettoAnt">Diretto Anteriore</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="alimDirettoPost"><label for="alimDirettoPost">Diretto Posteriore</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="alimMorsetti"><label for="alimMorsetti">Da Morsetti</label></div>
+        <div class="checkbox-item"><input type="checkbox" id="alimPettini"><label for="alimPettini">Da Pettini</label></div>
       </div>
       <h3 style="margin-top:20px;margin-bottom:10px;font-size:14px;color:var(--primary);">Collegamento Prefabbricato</h3>
       <div class="checkbox-grid">
@@ -848,10 +848,6 @@ document.addEventListener('DOMContentLoaded',function(){
     else{G('loginScreen').classList.add('show');}
   });
   G('regOverlay').addEventListener('click',function(e){if(e.target===G('regOverlay'))closeRegistro()});
-  document.querySelectorAll('input[name="alimGen"]').forEach(function(r){
-    r.addEventListener('mousedown',function(){this._wasChecked=this.checked;});
-    r.addEventListener('click',function(){if(this._wasChecked){this.checked=false;}});
-  });
   ['fattoreContem','pdMaxInvolucro'].forEach(function(id){var el=G(id);if(el)el.addEventListener('input',calcPd);});
   renderSovratempBody();
   G('loginPwd').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
@@ -1069,10 +1065,10 @@ function getData(){
     accFronteFianchi:G('accFronteFianchi').checked,accTotale:G('accTotale').checked,
     carpMarca:G('carpMarca').value,carpMateriale:G('carpMateriale').value,
     prove:[1,2,3,4,5,6,7,8].map(function(i){return G('prova'+i).checked}),
-    provaDiel:(document.querySelector('input[name="provaDiel"]:checked')||{}).value||'',
+    provaDiel:{a:G('dielA').checked,b:G('dielB').checked,c:G('dielC').checked},
     morsAlto:G('morsAlto').checked,morsBasso:G('morsBasso').checked,
     morsVanoSx:G('morsVanoSx').checked,morsVanoCle:G('morsVanoCle').checked,morsVanoDx:G('morsVanoDx').checked,
-    alimGen:(document.querySelector('input[name="alimGen"]:checked')||{}).value||'',
+    alimGen:{direttoAnt:G('alimDirettoAnt').checked,direttoPost:G('alimDirettoPost').checked,morsetti:G('alimMorsetti').checked,pettini:G('alimPettini').checked},
     collPrefab:G('collPrefab').checked,
     progressivo:_progr,
     allegati:{foto:_allegati.foto,schema:_allegati.schema},
@@ -1268,9 +1264,9 @@ function genPage3(d){
   '<th style="text-align:left;font-size:8.5pt;font-weight:bold;padding:4px 6px;background:#f0f0f0;">CEI EN 61439-1 Art. 10.9 — Proprietà dielettriche prova effettuata (in alternativa)</th>'+
   '<th style="text-align:center;font-size:8pt;background:#f0f0f0;width:110px;">Barrare<br>la prova eseguita</th>'+
   '</tr></thead>'+
-  '<tr><td>a) Tensione di tenuta a frequenza di esercizio</td><td style="text-align:center;">'+(d.provaDiel==='a'?'X':'')+'</td></tr>'+
-  '<tr><td>b) Tensione di tenuta a impulso</td><td style="text-align:center;">'+(d.provaDiel==='b'?'X':'')+'</td></tr>'+
-  '<tr><td>c) Resistenza di isolamento U=500V, R&gt;= 1000 Ω/V (Possibile per In &lt;= 250A)</td><td style="text-align:center;">'+(d.provaDiel==='c'?'X':'')+'</td></tr>'+
+  (function(){var pd=typeof d.provaDiel==='string'?{a:d.provaDiel==='a',b:d.provaDiel==='b',c:d.provaDiel==='c'}:(d.provaDiel||{});return'<tr><td>a) Tensione di tenuta a frequenza di esercizio</td><td style="text-align:center;">'+(pd.a?'X':'')+'</td></tr>'+
+  '<tr><td>b) Tensione di tenuta a impulso</td><td style="text-align:center;">'+(pd.b?'X':'')+'</td></tr>'+
+  '<tr><td>c) Resistenza di isolamento U=500V, R&gt;= 1000 Ω/V (Possibile per In &lt;= 250A)</td><td style="text-align:center;">'+(pd.c?'X':'')+'</td></tr>';})()+'
   '</table>'+
   '<p style="font-size:8pt;margin:6px 0;">Le prove di cui agli articoli 10.5.2 (Continuità del conduttore di protezione), 10.9 (Proprietà dielettriche) sono state effettuate mediante strumento di misura.</p>'+
   '<div class="result-text">Il quadro in oggetto, avendo superato le prove sopra elencate, risulta conforme alle<br>Norma CEI EN 61439-1 e CEI EN 61439-2</div>'+
@@ -1323,11 +1319,11 @@ function genPage4(d){
   '<span class="construct-option">Dx <span class="box">'+X(d.morsVanoDx)+'</span></span></div>'+
   '<div class="construct-row" style="margin-top:12px;"><span class="construct-label">Alim. Interruttore<br>Generale:</span>'+
   '<div style="display:flex;flex-direction:column;gap:4px;">'+
-  '<span class="construct-option">Diretto Ant. <span class="box">'+X(d.alimGen==='direttoAnt')+'</span></span>'+
-  '<span class="construct-option">Diretto Post. <span class="box">'+X(d.alimGen==='direttoPost')+'</span></span></div>'+
+  (function(){var ag=typeof d.alimGen==='string'?{direttoAnt:d.alimGen==='direttoAnt',direttoPost:d.alimGen==='direttoPost',morsetti:d.alimGen==='morsetti',pettini:d.alimGen==='pettini'}:(d.alimGen||{});return'<span class="construct-option">Diretto Ant. <span class="box">'+X(ag.direttoAnt)+'</span></span>'+
+  '<span class="construct-option">Diretto Post. <span class="box">'+X(ag.direttoPost)+'</span></span></div>'+
   '<div style="display:flex;flex-direction:column;gap:4px;margin-left:15px;">'+
-  '<span class="construct-option">Da Morsetti <span class="box">'+X(d.alimGen==='morsetti')+'</span></span>'+
-  '<span class="construct-option">Da Pettini <span class="box">'+X(d.alimGen==='pettini')+'</span></span></div>'+
+  '<span class="construct-option">Da Morsetti <span class="box">'+X(ag.morsetti)+'</span></span>'+
+  '<span class="construct-option">Da Pettini <span class="box">'+X(ag.pettini)+'</span></span></div>';})()+'
   '<div style="display:flex;flex-direction:column;gap:4px;margin-left:15px;">'+
   '<span class="construct-option">Coll. Prefabbricato <span class="box">'+X(d.collPrefab)+'</span></span>'+
   '</div></div>'+
@@ -1475,9 +1471,9 @@ function loadCert(key){
   G('accFronte').checked=!!c.accFronte;G('accRetro').checked=!!c.accRetro;
   G('accFronteFianchi').checked=!!c.accFronteFianchi;G('accTotale').checked=!!c.accTotale;
   if(c.prove)for(var i=0;i<8;i++)G('prova'+(i+1)).checked=c.prove[i];
-  var dr=document.querySelector('input[name="provaDiel"][value="'+c.provaDiel+'"]');if(dr)dr.checked=true;
+  var _pd=typeof c.provaDiel==='string'?{a:c.provaDiel==='a',b:c.provaDiel==='b',c:c.provaDiel==='c'}:(c.provaDiel||{});G('dielA').checked=!!_pd.a;G('dielB').checked=!!_pd.b;G('dielC').checked=!!_pd.c;
   ['morsAlto','morsBasso','morsVanoSx','morsVanoCle','morsVanoDx','collPrefab'].forEach(function(f){G(f).checked=!!c[f]});
-  var ar=document.querySelector('input[name="alimGen"][value="'+c.alimGen+'"]');if(ar)ar.checked=true;
+  var _ag=typeof c.alimGen==='string'?{direttoAnt:c.alimGen==='direttoAnt',direttoPost:c.alimGen==='direttoPost',morsetti:c.alimGen==='morsetti',pettini:c.alimGen==='pettini'}:(c.alimGen||{});G('alimDirettoAnt').checked=!!_ag.direttoAnt;G('alimDirettoPost').checked=!!_ag.direttoPost;G('alimMorsetti').checked=!!_ag.morsetti;G('alimPettini').checked=!!_ag.pettini;
   _progr=c.progressivo||null;_certKey=key;
   _allegati=c.allegati?{foto:c.allegati.foto||[],schema:c.allegati.schema||null}:{foto:[],schema:null};
   G('inclSovratemp').checked=!!c.inclSovratemp;
@@ -1503,9 +1499,9 @@ function duplicateCert(key){
   G('accFronte').checked=!!c.accFronte;G('accRetro').checked=!!c.accRetro;
   G('accFronteFianchi').checked=!!c.accFronteFianchi;G('accTotale').checked=!!c.accTotale;
   if(c.prove)for(var i=0;i<8;i++)G('prova'+(i+1)).checked=c.prove[i];
-  var dr=document.querySelector('input[name="provaDiel"][value="'+c.provaDiel+'"]');if(dr)dr.checked=true;
+  var _pd=typeof c.provaDiel==='string'?{a:c.provaDiel==='a',b:c.provaDiel==='b',c:c.provaDiel==='c'}:(c.provaDiel||{});G('dielA').checked=!!_pd.a;G('dielB').checked=!!_pd.b;G('dielC').checked=!!_pd.c;
   ['morsAlto','morsBasso','morsVanoSx','morsVanoCle','morsVanoDx','collPrefab'].forEach(function(f){G(f).checked=!!c[f]});
-  var ar=document.querySelector('input[name="alimGen"][value="'+c.alimGen+'"]');if(ar)ar.checked=true;
+  var _ag=typeof c.alimGen==='string'?{direttoAnt:c.alimGen==='direttoAnt',direttoPost:c.alimGen==='direttoPost',morsetti:c.alimGen==='morsetti',pettini:c.alimGen==='pettini'}:(c.alimGen||{});G('alimDirettoAnt').checked=!!_ag.direttoAnt;G('alimDirettoPost').checked=!!_ag.direttoPost;G('alimMorsetti').checked=!!_ag.morsetti;G('alimPettini').checked=!!_ag.pettini;
   _progr=null;_certKey=null;
   var nextMat=nextMatricola();
   if(nextMat){G('matricola').value=nextMat;_matEdited=true;}
@@ -1593,7 +1589,7 @@ function resetForm(){
     .forEach(function(f){G(f).checked=false});
   for(var i=1;i<=8;i++)G('prova'+i).checked=true;
   G('dielA').checked=false;G('dielB').checked=false;G('dielC').checked=false;
-  document.querySelectorAll('input[name="alimGen"]').forEach(function(r){r.checked=false;});
+  ['alimDirettoAnt','alimDirettoPost','alimMorsetti','alimPettini'].forEach(function(id){G(id).checked=false;});
   G('previewContainer').innerHTML='';_progr=null;_certKey=null;_matEdited=false;G('matricola').value='';
   _allegati={foto:[],schema:null};renderFotoGrid();renderSchemaInfo();
   G('inclSovratemp').checked=false;G('tempAmbMax').value='40';G('sovratempInstall').value='';
