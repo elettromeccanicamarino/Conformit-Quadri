@@ -387,6 +387,44 @@
         <div class="checkbox-item"><input type="radio" name="provaDiel" id="dielC" value="c"><label for="dielC">c) Resistenza isolamento</label></div>
       </div>
     </div>
+
+    <!-- SEZIONE VERIFICA SOVRATEMPERATURA -->
+    <div class="form-section" style="border-left-color:#e65100;">
+      <h2><span class="icon" style="background:#e65100;">🌡️</span> Verifica Sovratemperatura
+        <label style="margin-left:auto;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;cursor:pointer;">
+          <input type="checkbox" id="inclSovratemp" style="width:20px;height:20px;accent-color:#e65100;" onchange="toggleSovratemp()">
+          Includi nel certificato
+        </label>
+      </h2>
+      <div id="sovratempContent" style="display:none;">
+        <p style="color:#666;font-size:13px;margin:0 0 16px;">CEI EN 61439-1 Art. 10.10 — La pagina viene aggiunta come quinta pagina del certificato.</p>
+        <div class="form-grid" style="margin-bottom:16px;">
+          <div class="form-group"><label>Temperatura Ambiente Max (°C)</label><input type="number" id="tempAmbMax" value="40" min="0" max="60"></div>
+          <div class="form-group"><label>Tipo Installazione</label><input type="text" id="sovratempInstall" placeholder="Es. Interno - IP65"></div>
+          <div class="form-group"><label>Pd max involucro (W) — capacità di dissipazione</label><input type="number" id="pdMaxInvolucro" placeholder="Es. 800" min="0"></div>
+          <div class="form-group"><label>Fattore di Contemporaneità (%)</label><input type="number" id="fattoreContem" value="100" min="1" max="100"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <strong style="font-size:14px;color:var(--primary);">Componenti dissipatori</strong>
+          <button type="button" class="btn" style="background:#1565c0;color:#fff;padding:7px 16px;font-size:13px;" onclick="addSovratempComp()">➕ Aggiungi riga</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;" id="sovratempTable">
+            <thead><tr style="background:var(--primary);color:#fff;">
+              <th style="padding:8px 10px;text-align:left;min-width:200px;">Descrizione componente</th>
+              <th style="padding:8px 10px;text-align:center;width:110px;">Potenza (W)</th>
+              <th style="padding:8px 10px;text-align:left;min-width:140px;">Note</th>
+              <th style="padding:8px 6px;width:40px;"></th>
+            </tr></thead>
+            <tbody id="sovratempBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;padding:12px 16px;background:#f5f5f5;border-radius:8px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;">
+          <span style="font-size:14px;">Potenza totale con fattore contemporaneità: <strong id="pdTotaleDisplay">0 W</strong></span>
+          <span id="esitoBadge" style="font-size:15px;font-weight:800;padding:6px 18px;border-radius:8px;background:#ccc;color:#fff;">—</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="tab-content" id="tab-costruttivi">
@@ -576,6 +614,7 @@ var acIndex=-1,_progr=null,_certKey=null,_matEdited=false;
 var _clients={},_certs={},_registro={};
 var _accountType='main';
 var _demoSaveCount=0;
+var _sovratempComp=[{desc:'',pw:'',note:''}];
 var _setupToken=new URLSearchParams(window.location.search).get('token');
 var _allegati={foto:[],schema:null};
 var _config={ragioneSociale:'Elettromeccanica Marino',indirizzo:'Via Col Dei pioppi, 14',cap:'63074',citta:'S. Benedetto del Tr.',provincia:'Ap',logoLetters:'EM',logo:''};
@@ -812,6 +851,8 @@ document.addEventListener('DOMContentLoaded',function(){
     r.addEventListener('mousedown',function(){this._wasChecked=this.checked;});
     r.addEventListener('click',function(){if(this._wasChecked){this.checked=false;}});
   });
+  ['fattoreContem','pdMaxInvolucro'].forEach(function(id){var el=G(id);if(el)el.addEventListener('input',calcPd);});
+  renderSovratempBody();
   G('loginPwd').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
   var inp=G('committente');
   inp.addEventListener('input',function(){
@@ -1033,7 +1074,13 @@ function getData(){
     alimGen:(document.querySelector('input[name="alimGen"]:checked')||{}).value||'',
     collPrefab:G('collPrefab').checked,
     progressivo:_progr,
-    allegati:{foto:_allegati.foto,schema:_allegati.schema}
+    allegati:{foto:_allegati.foto,schema:_allegati.schema},
+    inclSovratemp:G('inclSovratemp').checked,
+    tempAmbMax:G('tempAmbMax').value||'40',
+    sovratempInstall:G('sovratempInstall').value||'',
+    pdMaxInvolucro:G('pdMaxInvolucro').value||'',
+    fattoreContem:G('fattoreContem').value||'100',
+    sovratempComp:JSON.parse(JSON.stringify(_sovratempComp))
   };
 }
 
@@ -1062,6 +1109,79 @@ function footerSplit(d,title){
   return'<div class="page-footer split">'+
     '<div class="footer-left"><div class="fdate">'+_config.citta+', '+d.data+'</div></div>'+
     '<div class="footer-right"><div class="ftitle" style="text-align:right;">'+title+'</div><div class="stamp-box">Timbro e Firma</div></div>'+
+  '</div>';
+}
+
+/* ===== VERIFICA SOVRATEMPERATURA ===== */
+function toggleSovratemp(){
+  var on=G('inclSovratemp').checked;
+  G('sovratempContent').style.display=on?'':'none';
+  if(on)renderSovratempBody();
+}
+function renderSovratempBody(){
+  var body=G('sovratempBody');if(!body)return;
+  body.innerHTML=_sovratempComp.map(function(r,i){
+    return'<tr>'+
+      '<td style="padding:4px 6px;border-bottom:1px solid #eee;"><input type="text" value="'+escHtml(r.desc||'')+'" oninput="_sovratempComp['+i+'].desc=this.value;calcPd()" style="width:100%;padding:5px 8px;border:1px solid #ddd;border-radius:5px;font-size:13px;"></td>'+
+      '<td style="padding:4px 6px;border-bottom:1px solid #eee;"><input type="number" value="'+(r.pw||'')+'" oninput="_sovratempComp['+i+'].pw=parseFloat(this.value)||0;calcPd()" min="0" style="width:90px;padding:5px 8px;border:1px solid #ddd;border-radius:5px;font-size:13px;text-align:right;"></td>'+
+      '<td style="padding:4px 6px;border-bottom:1px solid #eee;"><input type="text" value="'+escHtml(r.note||'')+'" oninput="_sovratempComp['+i+'].note=this.value" style="width:100%;padding:5px 8px;border:1px solid #ddd;border-radius:5px;font-size:13px;"></td>'+
+      '<td style="padding:4px 6px;border-bottom:1px solid #eee;text-align:center;"><button onclick="removeSovratempComp('+i+')" style="background:#c62828;color:#fff;border:none;border-radius:5px;padding:4px 9px;cursor:pointer;font-size:13px;">✕</button></td>'+
+    '</tr>';
+  }).join('');
+  calcPd();
+}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function addSovratempComp(){_sovratempComp.push({desc:'',pw:'',note:''});renderSovratempBody();}
+function removeSovratempComp(i){if(_sovratempComp.length>1)_sovratempComp.splice(i,1);renderSovratempBody();}
+function calcPd(){
+  var tot=_sovratempComp.reduce(function(s,r){return s+(parseFloat(r.pw)||0);},0);
+  var fc=(parseFloat((G('fattoreContem')||{}).value)||100)/100;
+  var pdTot=Math.round(tot*fc*10)/10;
+  var pdMax=parseFloat((G('pdMaxInvolucro')||{}).value)||0;
+  if(G('pdTotaleDisplay'))G('pdTotaleDisplay').textContent=pdTot+' W';
+  var badge=G('esitoBadge');if(!badge)return;
+  if(!pdMax){badge.textContent='—';badge.style.background='#9e9e9e';return;}
+  var ok=pdTot<=pdMax;
+  badge.textContent=ok?'✅ CONFORME':'❌ NON CONFORME';
+  badge.style.background=ok?'#2e7d32':'#c62828';
+}
+function genPage5(d){
+  var tot=d.sovratempComp.reduce(function(s,r){return s+(parseFloat(r.pw)||0);},0);
+  var fc=(parseFloat(d.fattoreContem)||100)/100;
+  var pdTot=Math.round(tot*fc*10)/10;
+  var pdMax=parseFloat(d.pdMaxInvolucro)||0;
+  var ok=pdMax>0&&pdTot<=pdMax;
+  var install=d.installazione==='interno'?'All\'interno':d.installazione==='esterno'?'All\'esterno':(d.instAltroText||d.installazione||'');
+  var sovInst=d.sovratempInstall||install;
+  return'<div class="page">'+spacer()+
+  infoBoxes(d)+
+  '<div style="text-align:center;font-weight:bold;font-size:13pt;border:2pt solid #000;padding:7px 10px;margin:10px 0 14px;letter-spacing:.5px;">VERIFICA SOVRATEMPERATURA — CEI EN 61439-1 ART. 10.10</div>'+
+  '<div style="font-weight:bold;font-size:10.5pt;margin:10px 0 6px;border-bottom:1.5pt solid #000;padding-bottom:3px;">Dati Involucro</div>'+
+  '<table style="width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:14px;">'+
+  '<tr><td style="border:1px solid #000;padding:5px 10px;font-weight:bold;width:200px;">Dimensioni (L×H×P) mm</td><td style="border:1px solid #000;padding:5px 10px;">'+(d.dimL||'—')+'×'+(d.dimH||'—')+'×'+(d.dimP||'—')+'</td>'+
+  '<td style="border:1px solid #000;padding:5px 10px;font-weight:bold;width:200px;">Tipo installazione</td><td style="border:1px solid #000;padding:5px 10px;">'+sovInst+'</td></tr>'+
+  '<tr><td style="border:1px solid #000;padding:5px 10px;font-weight:bold;">Temperatura ambiente max.</td><td style="border:1px solid #000;padding:5px 10px;">'+(d.tempAmbMax||40)+' °C</td>'+
+  '<td style="border:1px solid #000;padding:5px 10px;font-weight:bold;">Fattore contemporaneità</td><td style="border:1px solid #000;padding:5px 10px;">'+(d.fattoreContem||100)+' %</td></tr>'+
+  '</table>'+
+  '<div style="font-weight:bold;font-size:10.5pt;margin:10px 0 6px;border-bottom:1.5pt solid #000;padding-bottom:3px;">Componenti Dissipatori</div>'+
+  '<table style="width:100%;border-collapse:collapse;font-size:9pt;margin-bottom:14px;">'+
+  '<thead><tr style="background:#e8eaf6;"><th style="border:1px solid #000;padding:5px 8px;text-align:left;">Descrizione componente</th><th style="border:1px solid #000;padding:5px 8px;text-align:center;width:100px;">Potenza (W)</th><th style="border:1px solid #000;padding:5px 8px;text-align:left;width:160px;">Note</th></tr></thead>'+
+  '<tbody>'+d.sovratempComp.map(function(r){
+    return'<tr><td style="border:1px solid #000;padding:4px 8px;">'+(r.desc||'')+'</td><td style="border:1px solid #000;padding:4px 8px;text-align:center;">'+(r.pw||'')+'</td><td style="border:1px solid #000;padding:4px 8px;">'+(r.note||'')+'</td></tr>';
+  }).join('')+
+  '<tr style="background:#f5f5f5;font-weight:bold;"><td style="border:1px solid #000;padding:5px 8px;">TOTALE con fattore contemporaneità '+d.fattoreContem+'%</td><td style="border:1px solid #000;padding:5px 8px;text-align:center;">'+pdTot+'</td><td style="border:1px solid #000;padding:4px 8px;"></td></tr>'+
+  '</tbody></table>'+
+  '<div style="font-weight:bold;font-size:10.5pt;margin:10px 0 6px;border-bottom:1.5pt solid #000;padding-bottom:3px;">Verifica</div>'+
+  '<table style="width:100%;border-collapse:collapse;font-size:10pt;margin-bottom:16px;">'+
+  '<tr><td style="border:1px solid #000;padding:6px 12px;font-weight:bold;width:300px;">Potenza totale dissipata Pd</td><td style="border:1px solid #000;padding:6px 12px;font-size:11pt;font-weight:bold;">'+pdTot+' W</td></tr>'+
+  '<tr><td style="border:1px solid #000;padding:6px 12px;font-weight:bold;">Capacità dissipazione involucro Pd max</td><td style="border:1px solid #000;padding:6px 12px;font-size:11pt;font-weight:bold;">'+(pdMax||'—')+' W</td></tr>'+
+  '</table>'+
+  '<div style="text-align:center;margin:18px 0;">'+
+  '<span style="font-size:22pt;font-weight:900;padding:12px 36px;border:3pt solid '+(ok?'#1b5e20':'#b71c1c')+';color:'+(ok?'#1b5e20':'#b71c1c')+';border-radius:10px;letter-spacing:2px;">'+
+  (ok?'CONFORME':'NON CONFORME')+
+  '</span></div>'+
+  '<div style="font-size:8.5pt;color:#555;margin-top:6px;font-style:italic;">Verifica secondo CEI EN 61439-1 Art. 10.10 — Pd ('+pdTot+' W) '+(ok?'≤':'>')+(pdMax?'Pd max ('+pdMax+' W)':'—')+'</div>'+
+  footer(d,'IL RESPONSABILE TECNICO')+
   '</div>';
 }
 
@@ -1212,16 +1332,16 @@ function genPage4(d){
 /* ===== PREVIEW / PRINT ===== */
 function generatePreview(){
   var d=getData();
-  G('previewContainer').innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
+  G('previewContainer').innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d)+(d.inclSovratemp?genPage5(d):"");
   G('previewContainer').classList.toggle('demo-watermark',_accountType==='demo');
   G('previewContainer').scrollIntoView({behavior:'smooth'});
-  notify('Anteprima 4 pagine generata');
+  notify('Anteprima '+(G('inclSovratemp').checked?5:4)+' pagine generata');
 }
 function printCert(){
   if(demoGuard())return;
   var d=getData();
   var c=G('previewContainer');
-  if(!c.innerHTML.trim())c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
+  if(!c.innerHTML.trim())c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d)+(d.inclSovratemp?genPage5(d):"");
   setTimeout(function(){window.print()},300);
 }
 
@@ -1232,7 +1352,7 @@ function savePDF(){
   var d=getData();
   var mat=(d.matricola||'certificato').replace(/[\\/:*?"<>|]/g,'_');
   var c=G('previewContainer');
-  c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
+  c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d)+(d.inclSovratemp?genPage5(d):"");
   var pages=Array.from(c.querySelectorAll('.page'));
   if(!pages.length){notify('Nessun certificato da esportare','error');return;}
   notify('Generazione PDF in corso...');
@@ -1262,7 +1382,7 @@ function saveZip(){
   var d=getData();
   var mat=(d.matricola||'certificato').replace(/[\\/:*?"<>|]/g,'_');
   var c=G('previewContainer');
-  c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d);
+  c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d)+(d.inclSovratemp?genPage5(d):"");
   var pages=Array.from(c.querySelectorAll('.page'));
   if(!pages.length){notify('Nessun certificato da esportare','error');return;}
   notify('Generazione ZIP in corso...');
@@ -1354,6 +1474,13 @@ function loadCert(key){
   var ar=document.querySelector('input[name="alimGen"][value="'+c.alimGen+'"]');if(ar)ar.checked=true;
   _progr=c.progressivo||null;_certKey=key;
   _allegati=c.allegati?{foto:c.allegati.foto||[],schema:c.allegati.schema||null}:{foto:[],schema:null};
+  G('inclSovratemp').checked=!!c.inclSovratemp;
+  G('tempAmbMax').value=c.tempAmbMax||'40';
+  G('sovratempInstall').value=c.sovratempInstall||'';
+  G('pdMaxInvolucro').value=c.pdMaxInvolucro||'';
+  G('fattoreContem').value=c.fattoreContem||'100';
+  _sovratempComp=c.sovratempComp&&c.sovratempComp.length?c.sovratempComp:[{desc:'',pw:'',note:''}];
+  toggleSovratemp();
   renderFotoGrid();renderSchemaInfo();
   _matEdited=true;switchTabById('tab-dati');refreshBadge();notify('Certificato caricato');
 }
@@ -1462,7 +1589,11 @@ function resetForm(){
   G('dielA').checked=false;G('dielB').checked=false;G('dielC').checked=false;
   document.querySelectorAll('input[name="alimGen"]').forEach(function(r){r.checked=false;});
   G('previewContainer').innerHTML='';_progr=null;_certKey=null;_matEdited=false;G('matricola').value='';
-  _allegati={foto:[],schema:null};renderFotoGrid();renderSchemaInfo();refreshBadge();
+  _allegati={foto:[],schema:null};renderFotoGrid();renderSchemaInfo();
+  G('inclSovratemp').checked=false;G('tempAmbMax').value='40';G('sovratempInstall').value='';
+  G('pdMaxInvolucro').value='';G('fattoreContem').value='100';
+  _sovratempComp=[{desc:'',pw:'',note:''}];toggleSovratemp();
+  refreshBadge();
 }
 </script>
 </body>
