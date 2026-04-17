@@ -336,13 +336,12 @@
           <label>Nome / Ragione Sociale</label>
           <input type="text" id="committente" placeholder="Digita per cercare…" autocomplete="off">
           <div class="autocomplete-list" id="acList"></div>
-        </div>
-        <div class="form-group" style="max-width:180px;">
-          <label>Carattere committente (pt)</label>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <button type="button" onclick="var e=G('fsCommittente');e.value=Math.max(7,+e.value-1);" style="width:28px;height:28px;font-size:16px;cursor:pointer;">−</button>
-            <input type="number" id="fsCommittente" value="13" min="7" max="22" style="width:54px;text-align:center;">
-            <button type="button" onclick="var e=G('fsCommittente');e.value=Math.min(22,+e.value+1);" style="width:28px;height:28px;font-size:16px;cursor:pointer;">+</button>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+            <span style="font-size:12px;color:#555;">Dimensione testo nel certificato:</span>
+            <button type="button" onclick="var e=G('fsCommittente');e.value=Math.max(7,+e.value-1);" style="width:26px;height:26px;font-size:15px;cursor:pointer;border:1px solid #ccc;background:#f5f5f5;border-radius:4px;">−</button>
+            <input type="number" id="fsCommittente" value="13" min="7" max="22" style="width:46px;text-align:center;border:1px solid #ccc;border-radius:4px;padding:2px;">
+            <span style="font-size:12px;color:#555;">pt</span>
+            <button type="button" onclick="var e=G('fsCommittente');e.value=Math.min(22,+e.value+1);" style="width:26px;height:26px;font-size:15px;cursor:pointer;border:1px solid #ccc;background:#f5f5f5;border-radius:4px;">+</button>
           </div>
         </div>
         <div class="form-group full-width">
@@ -362,13 +361,12 @@
         <div class="form-group full-width">
           <label>Riferimento / Ubicazione</label>
           <textarea id="riferimento" placeholder="es. ASL Teramo&#10;Edificio B - Piano 2"></textarea>
-        </div>
-        <div class="form-group" style="max-width:180px;">
-          <label>Carattere riferimento (pt)</label>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <button type="button" onclick="var e=G('fsRiferimento');e.value=Math.max(7,+e.value-1);" style="width:28px;height:28px;font-size:16px;cursor:pointer;">−</button>
-            <input type="number" id="fsRiferimento" value="13" min="7" max="22" style="width:54px;text-align:center;">
-            <button type="button" onclick="var e=G('fsRiferimento');e.value=Math.min(22,+e.value+1);" style="width:28px;height:28px;font-size:16px;cursor:pointer;">+</button>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+            <span style="font-size:12px;color:#555;">Dimensione testo nel certificato:</span>
+            <button type="button" onclick="var e=G('fsRiferimento');e.value=Math.max(7,+e.value-1);" style="width:26px;height:26px;font-size:15px;cursor:pointer;border:1px solid #ccc;background:#f5f5f5;border-radius:4px;">−</button>
+            <input type="number" id="fsRiferimento" value="13" min="7" max="22" style="width:46px;text-align:center;border:1px solid #ccc;border-radius:4px;padding:2px;">
+            <span style="font-size:12px;color:#555;">pt</span>
+            <button type="button" onclick="var e=G('fsRiferimento');e.value=Math.min(22,+e.value+1);" style="width:26px;height:26px;font-size:15px;cursor:pointer;border:1px solid #ccc;background:#f5f5f5;border-radius:4px;">+</button>
           </div>
         </div>
       </div>
@@ -1111,7 +1109,7 @@ function infoBoxes(d){
   var gap='<td style="width:6px;padding:0;border:none;"></td>';
   return'<table style="width:100%;border-collapse:separate;border-spacing:0;margin:8px 0;">'+
     '<tr>'+
-    '<td style="width:22%;'+td+'"><div style="'+lbl+'">MATRICOLA QUADRO</div><div style="padding:10px 8px;text-align:center;font-size:12pt;font-weight:bold;">'+(d.matricola||'')+'</div></td>'+
+    '<td style="width:22%;'+td+'"><div style="'+lbl+'font-size:7.5pt;padding:4px 3px;white-space:nowrap;">MATRICOLA QUADRO</div><div style="padding:10px 8px;text-align:center;font-size:12pt;font-weight:bold;">'+(d.matricola||'')+'</div></td>'+
     gap+
     '<td style="width:33%;'+td+'"><div style="'+lbl+'">COMMITTENTE</div><div style="padding:10px 8px;text-align:center;font-size:'+(d.fsCommittente||13)+'pt;">'+(d.committente||'')+'</div></td>'+
     gap+
