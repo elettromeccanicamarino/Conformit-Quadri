@@ -337,6 +337,14 @@
           <input type="text" id="committente" placeholder="Digita per cercare…" autocomplete="off">
           <div class="autocomplete-list" id="acList"></div>
         </div>
+        <div class="form-group" style="max-width:180px;">
+          <label>Carattere committente (pt)</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button type="button" onclick="var e=G('fsCommittente');e.value=Math.max(7,+e.value-1);" style="width:28px;height:28px;font-size:16px;cursor:pointer;">−</button>
+            <input type="number" id="fsCommittente" value="13" min="7" max="22" style="width:54px;text-align:center;">
+            <button type="button" onclick="var e=G('fsCommittente');e.value=Math.min(22,+e.value+1);" style="width:28px;height:28px;font-size:16px;cursor:pointer;">+</button>
+          </div>
+        </div>
         <div class="form-group full-width">
           <label>Indirizzo Committente</label>
           <input type="text" id="indirizzoCommittente" placeholder="Via, CAP, Città (Prov)">
@@ -354,6 +362,14 @@
         <div class="form-group full-width">
           <label>Riferimento / Ubicazione</label>
           <textarea id="riferimento" placeholder="es. ASL Teramo&#10;Edificio B - Piano 2"></textarea>
+        </div>
+        <div class="form-group" style="max-width:180px;">
+          <label>Carattere riferimento (pt)</label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button type="button" onclick="var e=G('fsRiferimento');e.value=Math.max(7,+e.value-1);" style="width:28px;height:28px;font-size:16px;cursor:pointer;">−</button>
+            <input type="number" id="fsRiferimento" value="13" min="7" max="22" style="width:54px;text-align:center;">
+            <button type="button" onclick="var e=G('fsRiferimento');e.value=Math.min(22,+e.value+1);" style="width:28px;height:28px;font-size:16px;cursor:pointer;">+</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1054,6 +1070,7 @@ function getData(){
   return{
     matricola:G('matricola').value,data:fmtDate(G('dataCert').value),dataRaw:G('dataCert').value,
     annoMarcatura:G('annoMarcatura').value,committente:G('committente').value,
+    fsCommittente:parseInt(G('fsCommittente').value)||13,fsRiferimento:parseInt(G('fsRiferimento').value)||13,
     indirizzoCommittente:G('indirizzoCommittente').value,denominazione:G('denominazione').value,
     riferimento:G('riferimento').value,tensioneNom:G('tensioneNom').value,correnteNom:G('correnteNom').value,
     tensioneIsol:G('tensioneIsol').value,frequenza:G('frequenza').value,
@@ -1094,11 +1111,11 @@ function infoBoxes(d){
   var gap='<td style="width:6px;padding:0;border:none;"></td>';
   return'<table style="width:100%;border-collapse:separate;border-spacing:0;margin:8px 0;">'+
     '<tr>'+
-    '<td style="width:18%;'+td+'"><div style="'+lbl+'">MATRICOLA QUADRO</div><div style="padding:10px 8px;text-align:center;font-size:12pt;font-weight:bold;">'+(d.matricola||'')+'</div></td>'+
+    '<td style="width:22%;'+td+'"><div style="'+lbl+'">MATRICOLA QUADRO</div><div style="padding:10px 8px;text-align:center;font-size:12pt;font-weight:bold;">'+(d.matricola||'')+'</div></td>'+
     gap+
-    '<td style="width:37%;'+td+'"><div style="'+lbl+'">COMMITTENTE</div><div style="padding:10px 8px;text-align:center;font-size:13pt;">'+(d.committente||'')+'</div></td>'+
+    '<td style="width:33%;'+td+'"><div style="'+lbl+'">COMMITTENTE</div><div style="padding:10px 8px;text-align:center;font-size:'+(d.fsCommittente||13)+'pt;">'+(d.committente||'')+'</div></td>'+
     gap+
-    '<td style="'+td+'"><div style="'+lbl+'">RIFERIMENTO</div><div style="padding:10px 8px;text-align:center;font-size:13pt;">'+(rif||'')+'</div></td>'+
+    '<td style="'+td+'"><div style="'+lbl+'">RIFERIMENTO</div><div style="padding:10px 8px;text-align:center;font-size:'+(d.fsRiferimento||13)+'pt;">'+(rif||'')+'</div></td>'+
     '</tr>'+
   '</table>';
 }
@@ -1465,6 +1482,7 @@ function loadCert(key){
   ['matricola','annoMarcatura','committente','indirizzoCommittente','denominazione','riferimento',
    'tensioneNom','correnteNom','tensioneIsol','frequenza','dimL','dimH','dimP','carpMarca','instAltroText']
     .forEach(function(f){if(G(f))G(f).value=c[f]||''});
+  G('fsCommittente').value=c.fsCommittente||13;G('fsRiferimento').value=c.fsRiferimento||13;
   G('dataCert').value=c.dataRaw||'';
   G('gradoProtezione').value=c.gradoProtezione||'IP65';
   G('numColonne').value=c.numColonne||'1';
@@ -1493,6 +1511,7 @@ function duplicateCert(key){
   ['annoMarcatura','committente','indirizzoCommittente','denominazione','riferimento',
    'tensioneNom','correnteNom','tensioneIsol','frequenza','dimL','dimH','dimP','carpMarca','instAltroText']
     .forEach(function(f){if(G(f))G(f).value=c[f]||''});
+  G('fsCommittente').value=c.fsCommittente||13;G('fsRiferimento').value=c.fsRiferimento||13;
   G('dataCert').value=new Date().toISOString().split('T')[0];
   G('gradoProtezione').value=c.gradoProtezione||'IP65';
   G('numColonne').value=c.numColonne||'1';
@@ -1584,7 +1603,7 @@ function resetForm(){
     .forEach(function(f){G(f).value=''});
   G('dataCert').value=new Date().toISOString().split('T')[0];
   G('annoMarcatura').value=new Date().getFullYear();
-  G('tensioneNom').value='400';G('correnteNom').value='';G('tensioneIsol').value='500';G('frequenza').value='50';
+  G('tensioneNom').value='400';G('correnteNom').value='';G('tensioneIsol').value='500';G('frequenza').value='50';G('fsCommittente').value='13';G('fsRiferimento').value='13';
   G('gradoProtezione').value='IP65';G('numColonne').value='1';G('carpMateriale').value='Metallo';
   G('instInterno').checked=true;G('accFronte').checked=true;
   ['accRetro','accFronteFianchi','accTotale','morsAlto','morsBasso','morsVanoSx','morsVanoCle','morsVanoDx','collPrefab']
