@@ -262,12 +262,12 @@
     <div style="padding:20px;overflow-y:auto;flex:1;">
       <p style="margin:0 0 16px;color:#555;font-size:14px;">Inserisci i dati della tua azienda una volta sola — verranno stampati su tutti i certificati.</p>
       <div class="form-grid">
-        <div class="form-group full-width"><label>Ragione Sociale *</label><input type="text" id="cfg_ragioneSociale" placeholder="Es. Elettromeccanica Marino"></div>
-        <div class="form-group full-width"><label>Indirizzo (via e numero)</label><input type="text" id="cfg_indirizzo" placeholder="Es. Via Col Dei Pioppi, 14"></div>
-        <div class="form-group"><label>CAP</label><input type="text" id="cfg_cap" placeholder="Es. 63074"></div>
-        <div class="form-group"><label>Città</label><input type="text" id="cfg_citta" placeholder="Es. S. Benedetto del Tr."></div>
-        <div class="form-group"><label>Provincia</label><input type="text" id="cfg_provincia" placeholder="Es. Ap" maxlength="5"></div>
-        <div class="form-group"><label>Sigla cerchio app (2-3 lettere)</label><input type="text" id="cfg_logoLetters" placeholder="Es. EM" maxlength="3"></div>
+        <div class="form-group full-width"><label>Ragione Sociale *</label><input type="text" id="init_ragioneSociale" placeholder="Es. Elettromeccanica Marino"></div>
+        <div class="form-group full-width"><label>Indirizzo (via e numero)</label><input type="text" id="init_indirizzo" placeholder="Es. Via Col Dei Pioppi, 14"></div>
+        <div class="form-group"><label>CAP</label><input type="text" id="init_cap" placeholder="Es. 63074"></div>
+        <div class="form-group"><label>Città</label><input type="text" id="init_citta" placeholder="Es. S. Benedetto del Tr."></div>
+        <div class="form-group"><label>Provincia</label><input type="text" id="init_provincia" placeholder="Es. Ap" maxlength="5"></div>
+        <div class="form-group"><label>Sigla cerchio app (2-3 lettere)</label><input type="text" id="init_logoLetters" placeholder="Es. EM" maxlength="3"></div>
         <div class="form-group full-width">
           <label>Logo per i certificati (opzionale — JPG, PNG max 500KB)</label>
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:6px;">
@@ -710,6 +710,7 @@ function applyConfig(){
   document.title=(rag||'Conformità Quadri')+' — Certificati di Conformità';
   ['ragioneSociale','indirizzo','cap','citta','provincia','logoLetters'].forEach(function(f){
     var el=G('cfg_'+f);if(el&&!el.dataset.dirty)el.value=_config[f]||'';
+    var el2=G('init_'+f);if(el2)el2.value=_config[f]||'';
   });
   if(G('certCitta'))G('certCitta').value=_config.citta||'';
   if(isDemo){
@@ -731,13 +732,14 @@ function applyConfig(){
   }
 }
 function saveConfig(closeModal){
+  var p=closeModal?'init_':'cfg_';
   var c={
-    ragioneSociale:(G('cfg_ragioneSociale').value||'').trim(),
-    indirizzo:(G('cfg_indirizzo').value||'').trim(),
-    cap:(G('cfg_cap').value||'').trim(),
-    citta:(G('cfg_citta').value||'').trim(),
-    provincia:(G('cfg_provincia').value||'').trim(),
-    logoLetters:(G('cfg_logoLetters').value||'').trim(),
+    ragioneSociale:(G(p+'ragioneSociale').value||'').trim(),
+    indirizzo:(G(p+'indirizzo').value||'').trim(),
+    cap:(G(p+'cap').value||'').trim(),
+    citta:(G(p+'citta').value||'').trim(),
+    provincia:(G(p+'provincia').value||'').trim(),
+    logoLetters:(G(p+'logoLetters').value||'').trim(),
     logo:_config.logo||''
   };
   if(!c.ragioneSociale){notify('Inserisci la ragione sociale','error');return;}
