@@ -687,7 +687,8 @@ function initApp(){
       _certs=results[0];_registro=results[1];_clients=results[2];
       var cfg=results[3];
       if(_accountType==='demo'){
-        if(cfg&&cfg.ragioneSociale){ Object.assign(_config,cfg); }
+        if(localStorage.getItem('demoConfigSaved')&&cfg&&cfg.ragioneSociale){Object.assign(_config,cfg);}
+        else{Object.assign(_config,{ragioneSociale:'',indirizzo:'',cap:'',citta:'',provincia:'',logoLetters:'',logo:''});}
       } else if(cfg&&cfg.ragioneSociale){
         Object.assign(_config,cfg);
       }
@@ -742,6 +743,7 @@ function saveConfig(closeModal){
   if(!c.ragioneSociale){notify('Inserisci la ragione sociale','error');return;}
   apiPut('/api/config',c).then(function(){
     Object.assign(_config,c);
+    if(_accountType==='demo')localStorage.setItem('demoConfigSaved','1');
     applyConfig();
     if(closeModal)closeFirstRunModal();
     notify('Impostazioni azienda salvate ✓');
