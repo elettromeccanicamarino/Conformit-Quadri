@@ -1283,8 +1283,8 @@ function genPage3(d){
   '<div style="text-align:center;font-size:10pt;margin-bottom:6px;">Esito</div>'+
   '<table class="test-table"><thead><tr><th style="text-align:left;"></th><th>POS</th><th>NEG</th></tr></thead><tbody>'+rows+'</tbody></table>'+
   '<table class="dielectric-table" style="margin-top:8px;"><thead><tr>'+
-  '<th style="text-align:left;font-size:8.5pt;font-weight:bold;padding:4px 6px;background:#f0f0f0;">CEI EN 61439-1 Art. 10.9 — Proprietà dielettriche prova effettuata (in alternativa)</th>'+
-  '<th style="text-align:center;font-size:8pt;background:#f0f0f0;width:110px;">Barrare<br>la prova eseguita</th>'+
+  '<th style="text-align:left;font-size:8.5pt;font-weight:bold;padding:4px 6px;background:#f0f0f0;-webkit-print-color-adjust:exact;print-color-adjust:exact;">CEI EN 61439-1 Art. 10.9 — Proprietà dielettriche prova effettuata (in alternativa)</th>'+
+  '<th style="text-align:center;font-size:8pt;background:#f0f0f0;-webkit-print-color-adjust:exact;print-color-adjust:exact;width:110px;">Barrare<br>la prova eseguita</th>'+
   '</tr></thead>'+
   '<tr><td>a) Tensione di tenuta a frequenza di esercizio</td><td style="text-align:center;">'+(pd.a?'X':'')+'</td></tr>'+
   '<tr><td>b) Tensione di tenuta a impulso</td><td style="text-align:center;">'+(pd.b?'X':'')+'</td></tr>'+
@@ -1375,6 +1375,8 @@ function savePDF(){
   if(typeof html2canvas==='undefined'||typeof window.jspdf==='undefined'){notify('Librerie non ancora caricate, riprova tra un secondo','error');return;}
   var d=getData();
   var mat=(d.matricola||'certificato').replace(/[\\/:*?"<>|]/g,'_');
+  var comm=(d.committente||'').replace(/[\\/:*?"<>|]/g,'_').trim().slice(0,30);
+  var fname=(mat+(comm?'_'+comm:'')).replace(/__+/g,'_');
   var c=G('previewContainer');
   c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d)+(d.inclSovratemp?genPage5(d):"");
   var pages=Array.from(c.querySelectorAll('.page'));
@@ -1390,7 +1392,7 @@ function savePDF(){
       });
       var a=document.createElement('a');
       a.href=pdf.output('bloburi');
-      a.download=mat+'.pdf';
+      a.download=fname+'.pdf';
       document.body.appendChild(a);a.click();
       document.body.removeChild(a);
       notify('PDF scaricato!');
@@ -1405,10 +1407,11 @@ function saveZip(){
   }
   var d=getData();
   var mat=(d.matricola||'certificato').replace(/[\\/:*?"<>|]/g,'_');
+  var comm=(d.committente||'').replace(/[\\/:*?"<>|]/g,'_').trim().slice(0,30);
+  var fname=(mat+(comm?'_'+comm:'')).replace(/__+/g,'_');
   var c=G('previewContainer');
   c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d)+(d.inclSovratemp?genPage5(d):"");
-  var pages=Array.from(c.querySelectorAll('.page'));
-  if(!pages.length){notify('Nessun certificato da esportare','error');return;}
+  var pages=Array.from(c.querySelectorAll('.page'));  if(!pages.length){notify('Nessun certificato da esportare','error');return;}
   notify('Generazione ZIP in corso...');
   var capturePromises=pages.map(function(page){
     return html2canvas(page,{scale:2,useCORS:true,logging:false,backgroundColor:'#ffffff'});
@@ -1421,7 +1424,7 @@ function saveZip(){
       pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,210,297);
     });
     var zip=new JSZip();
-    zip.file(mat+'.pdf',pdf.output('datauristring').split(',')[1],{base64:true});
+    zip.file(fname+'.pdf',pdf.output('datauristring').split(',')[1],{base64:true});
     if(_allegati.foto&&_allegati.foto.length){
       var fFolder=zip.folder('foto');
       _allegati.foto.forEach(function(f,i){
@@ -1437,7 +1440,7 @@ function saveZip(){
   }).then(function(blob){
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download=mat+'_archivio.zip';
+    a.download=fname+'_archivio.zip';
     document.body.appendChild(a);a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
