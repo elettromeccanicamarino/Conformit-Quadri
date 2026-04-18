@@ -1357,7 +1357,6 @@ function generatePreview(){
   notify('Anteprima '+(G('inclSovratemp').checked?5:4)+' pagine generata');
 }
 function printCert(){
-  if(demoGuard())return;
   var d=getData();
   var c=G('previewContainer');
   if(!c.innerHTML.trim())c.innerHTML=genPage1(d)+genPage2(d)+genPage3(d)+genPage4(d)+(d.inclSovratemp?genPage5(d):"");
