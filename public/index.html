@@ -327,6 +327,7 @@
         </div>
         <div class="form-group"><label>Data</label><input type="date" id="dataCert"></div>
         <div class="form-group"><label>Anno Marcatura CE</label><input type="text" id="annoMarcatura" placeholder="2026"></div>
+        <div class="form-group"><label>Città (intestazione)</label><input type="text" id="certCitta" placeholder="Es. Roma" oninput="_config.citta=this.value"></div>
       </div>
     </div>
     <div class="form-section">
@@ -686,7 +687,7 @@ function initApp(){
       _certs=results[0];_registro=results[1];_clients=results[2];
       var cfg=results[3];
       if(_accountType==='demo'){
-        Object.assign(_config,{ragioneSociale:'',indirizzo:'',cap:'',citta:'',provincia:'',logoLetters:'',logo:''});
+        if(cfg&&cfg.ragioneSociale){ Object.assign(_config,cfg); }
       } else if(cfg&&cfg.ragioneSociale){
         Object.assign(_config,cfg);
       }
@@ -709,6 +710,7 @@ function applyConfig(){
   ['ragioneSociale','indirizzo','cap','citta','provincia','logoLetters'].forEach(function(f){
     var el=G('cfg_'+f);if(el&&!el.dataset.dirty)el.value=_config[f]||'';
   });
+  if(G('certCitta'))G('certCitta').value=_config.citta||'';
   if(isDemo){
     document.querySelectorAll('#cfg_ragioneSociale').forEach(function(el){el.placeholder='Es. Rossi Impianti Srl';});
     document.querySelectorAll('#cfg_indirizzo').forEach(function(el){el.placeholder='Es. Via Roma, 10';});
