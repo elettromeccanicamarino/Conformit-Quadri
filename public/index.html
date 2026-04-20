@@ -87,7 +87,7 @@
     .search-bar input:focus{outline:none;border-color:var(--primary)}
     .reg-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:8000;align-items:flex-start;justify-content:center;padding-top:50px;}
     .reg-overlay.open{display:flex}
-    .reg-modal{background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.35);width:min(940px,96vw);max-height:82vh;display:flex;flex-direction:column;overflow:hidden;}
+    .reg-modal{background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.35);width:min(940px,96vw);min-height:55vh;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;}
     .reg-head{background:linear-gradient(135deg,#e65100,#ef6c00);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
     .reg-head h2{font-size:19px;font-weight:700;}
     .reg-head .close-btn{background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:7px 16px;cursor:pointer;font-size:14px;font-weight:600;}
@@ -945,6 +945,7 @@ function openRegistro(){G('regOverlay').classList.add('open');renderRegistro()}
 function closeRegistro(){G('regOverlay').classList.remove('open')}
 function renderRegistro(){
   var q=(G('regSearch').value||'').toLowerCase().trim();
+  var sel=G('regSearch')===document.activeElement;
   var items=Object.values(_registro);
   if(q)items=items.filter(function(r){
     return fmtP(r.progressivo,r.anno).toLowerCase().includes(q)||
@@ -953,7 +954,7 @@ function renderRegistro(){
   });
   items.sort(function(a,b){return(b.anno*10000+(b.progressivo||0))-(a.anno*10000+(a.progressivo||0))});
   G('regCount').textContent=items.length+' certificat'+(items.length===1?'o':'i');
-  if(!items.length){G('regTableWrap').innerHTML='<div class="reg-empty">📋 Nessun certificato nel registro</div>';return;}
+  if(!items.length){G('regTableWrap').innerHTML='<div class="reg-empty">📋 Nessun certificato nel registro</div>';if(sel)G('regSearch').focus();return;}
   var rows=items.map(function(r){
     var rif=(r.riferimento||'').replace(/\n/g,' ').slice(0,55);
     return'<tr><td><span class="reg-num">'+fmtP(r.progressivo,r.anno)+'</span></td>'+
@@ -965,6 +966,7 @@ function renderRegistro(){
       '<button class="btn-sm btn-delete" onclick="delFromReg(\''+r.id+'\',\''+r.certKey+'\')">✕</button></td></tr>';
   }).join('');
   G('regTableWrap').innerHTML='<table class="reg-table"><thead><tr><th>N°</th><th>Matricola</th><th>Denominazione / Riferimento</th><th>Committente</th><th>Data</th><th></th></tr></thead><tbody>'+rows+'</tbody></table>';
+  if(sel)G('regSearch').focus();
 }
 function loadFromReg(certKey){closeRegistro();loadCert(certKey)}
 function dupFromReg(certKey){closeRegistro();duplicateCert(certKey)}
