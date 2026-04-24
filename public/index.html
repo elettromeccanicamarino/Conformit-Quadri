@@ -1311,7 +1311,7 @@ function genPage4(d){
   '<tr><td class="lbl" style="width:140px;">N. Matricola: '+d.matricola+'</td><td colspan="3"><strong>Denominazione Quadro Elettrico:</strong> '+(d.denominazione||'')+'</td></tr>'+
   '<tr><td class="lbl">Riferimento:</td><td colspan="3">'+rifLines+'</td></tr>'+
   '<tr><td class="lbl">Cablatore del Quadro:</td><td colspan="3">'+_config.ragioneSociale+' - '+_config.indirizzo+' - '+_config.cap+' '+_config.citta+' ('+_config.provincia+')</td></tr>'+
-  '<tr><td class="lbl">Committente:</td><td colspan="3">'+d.committente+(d.indirizzoCommittente?' - '+d.indirizzoCommittente:'')+'</td></tr>'+
+  '<tr><td class="lbl">Committente:</td><td colspan="3">'+d.committente+(d.indirizzoCommittente?' - '+d.indirizzoCommittente:'')+(d.cittaCommittente?' - '+d.cittaCommittente:'')+'</td></tr>'+
   '</table>'+
   '<table class="p4-table" style="width:auto;margin-bottom:5px;">'+
   '<tr><td class="lbl" style="width:230px;">Tensione di Funzionamento:</td><td style="width:90px;text-align:center;">'+d.tensioneNom+'V</td></tr>'+
