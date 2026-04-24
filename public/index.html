@@ -1119,7 +1119,7 @@ function infoBoxes(d){
     '<tr>'+
     '<td style="width:22%;padding:0;vertical-align:top;border:none;"><div style="'+td+'"><div style="'+lbl+'font-size:7.5pt;padding:4px 3px;white-space:nowrap;">MATRICOLA QUADRO</div><div style="padding:5px 8px;text-align:center;font-size:12pt;font-weight:bold;">'+(d.matricola||'')+'</div></div></td>'+
     gap+
-    '<td style="width:33%;'+td+'"><div style="'+lbl+'">COMMITTENTE</div><div style="padding:10px 8px;text-align:center;font-size:'+(d.fsCommittente||13)+'pt;">'+(d.committente||'')+(d.indirizzoCommittente?'<br><span style="font-size:9pt;font-weight:normal;">'+d.indirizzoCommittente+'</span>':'')+'</div></td>'+
+    '<td style="width:33%;'+td+'"><div style="'+lbl+'">COMMITTENTE</div><div style="padding:10px 8px;text-align:center;font-size:'+(d.fsCommittente||13)+'pt;">'+(d.committente||'')+(d.indirizzoCommittente?'<br>'+d.indirizzoCommittente:'')+'</div></td>'+
     gap+
     '<td style="'+td+'"><div style="'+lbl+'">RIFERIMENTO</div><div style="padding:10px 8px;text-align:center;font-size:'+(d.fsRiferimento||13)+'pt;">'+(rif||'')+'</div></td>'+
     '</tr>'+
