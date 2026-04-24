@@ -982,10 +982,10 @@ function delFromReg(regId,certKey){
 
 /* ===== CLIENTI ===== */
 function saveClient(){
-  var name=G('committente').value.trim(),addr=G('indirizzoCommittente').value.trim();
+  var name=G('committente').value.trim(),addr=G('indirizzoCommittente').value.trim(),citta=G('cittaCommittente').value.trim();
   if(!name){notify('Inserisci il nome committente','error');return;}
   var key=name.toLowerCase().replace(/[^a-z0-9]/g,'_');
-  var client={name:name,address:addr,savedAt:new Date().toLocaleString('it-IT')};
+  var client={name:name,address:addr,citta:citta,savedAt:new Date().toLocaleString('it-IT')};
   apiPut('/api/clients/'+key,client).then(function(){_clients[key]=client;notify('Cliente salvato in rubrica');hideAC();});
 }
 function deleteClient(key){
@@ -994,14 +994,15 @@ function deleteClient(key){
 }
 function useClient(key){
   var c=_clients[key];if(!c)return;
-  G('committente').value=c.name;G('indirizzoCommittente').value=c.address||'';switchTabById('tab-dati');
+  G('committente').value=c.name;G('indirizzoCommittente').value=c.address||'';G('cittaCommittente').value=c.citta||'';switchTabById('tab-dati');
 }
 function editClient(key){
   var c=_clients[key];if(!c)return;
   var card=document.querySelector('.client-card[data-key="'+key+'"]');if(!card)return;
   card.innerHTML='<div style="flex:1;display:flex;flex-direction:column;gap:8px;">'+
     '<input id="editName_'+key+'" type="text" value="'+c.name.replace(/"/g,'&quot;')+'" style="padding:8px 12px;border:2px solid var(--primary);border-radius:7px;font-size:14px;font-family:inherit;width:100%">'+
-    '<input id="editAddr_'+key+'" type="text" value="'+(c.address||'').replace(/"/g,'&quot;')+'" placeholder="Indirizzo" style="padding:8px 12px;border:2px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;width:100%">'+
+    '<input id="editAddr_'+key+'" type="text" value="'+(c.address||'').replace(/"/g,'&quot;')+'" placeholder="Via, N° civico" style="padding:8px 12px;border:2px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;width:100%">'+
+    '<input id="editCitta_'+key+'" type="text" value="'+(c.citta||'').replace(/"/g,'&quot;')+'" placeholder="CAP Città (Prov)" style="padding:8px 12px;border:2px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;width:100%">'+
     '<div style="display:flex;gap:8px;margin-top:2px;">'+
     '<button onclick="saveEditClient(\''+key+'\')" style="padding:7px 18px;background:var(--success);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;">✓ Salva</button>'+
     '<button onclick="renderClientsList(G(\'clientSearch\').value)" style="padding:7px 18px;background:#999;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">✕ Annulla</button>'+
@@ -1011,10 +1012,11 @@ function editClient(key){
 function saveEditClient(key){
   var newName=document.getElementById('editName_'+key).value.trim();
   var newAddr=document.getElementById('editAddr_'+key).value.trim();
+  var newCitta=document.getElementById('editCitta_'+key).value.trim();
   if(!newName){notify('Il nome non può essere vuoto','error');return;}
   var oldData=_clients[key];
   var newKey=newName.toLowerCase().replace(/[^a-z0-9]/g,'_');
-  var newClient=Object.assign({},oldData,{name:newName,address:newAddr});
+  var newClient=Object.assign({},oldData,{name:newName,address:newAddr,citta:newCitta});
   var ops=[apiPut('/api/clients/'+newKey,newClient)];
   if(newKey!==key)ops.push(apiDel('/api/clients/'+key));
   Promise.all(ops).then(function(){
