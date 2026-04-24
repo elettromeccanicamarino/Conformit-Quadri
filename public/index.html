@@ -347,7 +347,11 @@
         </div>
         <div class="form-group full-width">
           <label>Indirizzo Committente</label>
-          <input type="text" id="indirizzoCommittente" placeholder="Via, CAP, Città (Prov)">
+          <input type="text" id="indirizzoCommittente" placeholder="Via, N° civico">
+        </div>
+        <div class="form-group full-width">
+          <label>CAP e Città Committente</label>
+          <input type="text" id="cittaCommittente" placeholder="62014 Corridonia (Mc)">
         </div>
       </div>
       <div style="margin-top:10px;"><button class="save-client-btn" onclick="saveClient()">💾 Salva cliente in rubrica</button></div>
@@ -1077,7 +1081,7 @@ function getData(){
     matricola:G('matricola').value,data:fmtDate(G('dataCert').value),dataRaw:G('dataCert').value,
     annoMarcatura:G('annoMarcatura').value,committente:G('committente').value,
     fsCommittente:parseInt(G('fsCommittente').value)||13,fsRiferimento:parseInt(G('fsRiferimento').value)||13,
-    indirizzoCommittente:G('indirizzoCommittente').value,denominazione:G('denominazione').value,
+    indirizzoCommittente:G('indirizzoCommittente').value,cittaCommittente:G('cittaCommittente').value,denominazione:G('denominazione').value,
     riferimento:G('riferimento').value,tensioneNom:G('tensioneNom').value,correnteNom:G('correnteNom').value,
     tensioneIsol:G('tensioneIsol').value,frequenza:G('frequenza').value,
     dimL:G('dimL').value,dimH:G('dimH').value,dimP:G('dimP').value,
@@ -1119,7 +1123,7 @@ function infoBoxes(d){
     '<tr>'+
     '<td style="width:22%;padding:0;vertical-align:top;border:none;"><div style="'+td+'"><div style="'+lbl+'font-size:7.5pt;padding:4px 3px;white-space:nowrap;">MATRICOLA QUADRO</div><div style="padding:5px 8px;text-align:center;font-size:12pt;font-weight:bold;">'+(d.matricola||'')+'</div></div></td>'+
     gap+
-    '<td style="width:33%;'+td+'"><div style="'+lbl+'">COMMITTENTE</div><div style="padding:10px 8px;text-align:center;font-size:'+(d.fsCommittente||13)+'pt;">'+(d.committente||'')+(d.indirizzoCommittente?'<br>'+d.indirizzoCommittente:'')+'</div></td>'+
+    '<td style="width:33%;'+td+'"><div style="'+lbl+'">COMMITTENTE</div><div style="padding:10px 8px;text-align:center;font-size:'+(d.fsCommittente||13)+'pt;">'+(d.committente||'')+(d.indirizzoCommittente?'<br>'+d.indirizzoCommittente:'')+(d.cittaCommittente?'<br>'+d.cittaCommittente:'')+'</div></td>'+
     gap+
     '<td style="'+td+'"><div style="'+lbl+'">RIFERIMENTO</div><div style="padding:10px 8px;text-align:center;font-size:'+(d.fsRiferimento||13)+'pt;">'+(rif||'')+'</div></td>'+
     '</tr>'+
@@ -1487,7 +1491,7 @@ function loadCertList(){
 }
 function loadCert(key){
   var c=_certs[key];if(!c)return;
-  ['matricola','annoMarcatura','committente','indirizzoCommittente','denominazione','riferimento',
+  ['matricola','annoMarcatura','committente','indirizzoCommittente','cittaCommittente','denominazione','riferimento',
    'tensioneNom','correnteNom','tensioneIsol','frequenza','dimL','dimH','dimP','carpMarca','instAltroText']
     .forEach(function(f){if(G(f))G(f).value=c[f]||''});
   G('fsCommittente').value=c.fsCommittente||13;G('fsRiferimento').value=c.fsRiferimento||13;
@@ -1516,7 +1520,7 @@ function loadCert(key){
 }
 function duplicateCert(key){
   var c=_certs[key];if(!c)return;
-  ['annoMarcatura','committente','indirizzoCommittente','denominazione','riferimento',
+  ['annoMarcatura','committente','indirizzoCommittente','cittaCommittente','denominazione','riferimento',
    'tensioneNom','correnteNom','tensioneIsol','frequenza','dimL','dimH','dimP','carpMarca','instAltroText']
     .forEach(function(f){if(G(f))G(f).value=c[f]||''});
   G('fsCommittente').value=c.fsCommittente||13;G('fsRiferimento').value=c.fsRiferimento||13;
@@ -1607,7 +1611,7 @@ function deleteCert(key){
 /* ===== RESET ===== */
 function resetForm(){
   if(!confirm('Resettare tutti i campi?'))return;
-  ['matricola','committente','indirizzoCommittente','denominazione','riferimento','dimL','dimH','dimP','carpMarca','instAltroText']
+  ['matricola','committente','indirizzoCommittente','cittaCommittente','denominazione','riferimento','dimL','dimH','dimP','carpMarca','instAltroText']
     .forEach(function(f){G(f).value=''});
   G('dataCert').value=new Date().toISOString().split('T')[0];
   G('annoMarcatura').value=new Date().getFullYear();
