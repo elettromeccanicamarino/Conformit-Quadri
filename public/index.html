@@ -982,7 +982,7 @@ function delFromReg(regId,certKey){
 
 /* ===== CLIENTI ===== */
 function saveClient(){
-  var name=G('committente').value.trim(),addr=G('indirizzoCommittente').value.trim(),citta=G('cittaCommittente').value.trim();
+  var name=G('committente').value.trim(),addr=G('indirizzoCommittente').value.trim(),ec=G('cittaCommittente'),citta=ec?ec.value.trim():'';
   if(!name){notify('Inserisci il nome committente','error');return;}
   var key=name.toLowerCase().replace(/[^a-z0-9]/g,'_');
   var client={name:name,address:addr,citta:citta,savedAt:new Date().toLocaleString('it-IT')};
@@ -994,7 +994,10 @@ function deleteClient(key){
 }
 function useClient(key){
   var c=_clients[key];if(!c)return;
-  G('committente').value=c.name;G('indirizzoCommittente').value=c.address||'';G('cittaCommittente').value=c.citta||'';switchTabById('tab-dati');
+  G('committente').value=c.name;
+  G('indirizzoCommittente').value=c.address||'';
+  var ec=G('cittaCommittente');if(ec)ec.value=c.citta||'';
+  switchTabById('tab-dati');
 }
 function editClient(key){
   var c=_clients[key];if(!c)return;
@@ -1043,7 +1046,7 @@ function showAC(items){
 }
 function hideAC(){G('acList').classList.remove('show');acIndex=-1}
 function hlMatch(t,q){if(!q)return t;return t.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<strong style="color:#1a237e;background:#fff9c4">$1</strong>')}
-function selectAC(key){var c=_clients[key];if(!c)return;G('committente').value=c.name;G('indirizzoCommittente').value=c.address||'';G('cittaCommittente').value=c.citta||'';hideAC()}
+function selectAC(key){var c=_clients[key];if(!c)return;G('committente').value=c.name;G('indirizzoCommittente').value=c.address||'';var ec=G('cittaCommittente');if(ec)ec.value=c.citta||'';hideAC();}
 function deleteClientAC(key){if(!confirm('Eliminare dalla rubrica?'))return;apiDel('/api/clients/'+key).then(function(){delete _clients[key];hideAC();})}
 
 /* ===== ESPORTA / IMPORTA ===== */
