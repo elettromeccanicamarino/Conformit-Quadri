@@ -1033,7 +1033,7 @@ function renderClientsList(filter){
   var keys=Object.keys(_clients).filter(function(k){return!filter||_clients[k].name.toLowerCase().includes(filter.toLowerCase())});
   var container=G('clientsList');
   if(!keys.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">👥</div>'+(filter?'Nessun risultato':'Nessun cliente salvato')+'</div>';return;}
-  container.innerHTML=keys.map(function(k){var c=_clients[k];return'<div class="client-card" data-key="'+k+'"><div class="cc-info"><div class="cc-name">'+c.name+'</div><div class="cc-addr">'+(c.address||'—')+'</div></div><div class="cc-actions"><button class="btn-load" onclick="useClient(\''+k+'\')">Usa</button><button style="background:#e65100;color:#fff;" onclick="editClient(\''+k+'\')">✏️ Modifica</button><button class="btn-delete" onclick="deleteClient(\''+k+'\')">Elimina</button></div></div>';}).join('');
+  container.innerHTML=keys.map(function(k){var c=_clients[k];return'<div class="client-card" data-key="'+k+'"><div class="cc-info"><div class="cc-name">'+c.name+'</div><div class="cc-addr">'+(c.address||'—')+(c.citta?' — '+c.citta:'')+'</div></div><div class="cc-actions"><button class="btn-load" onclick="useClient(\''+k+'\')">Usa</button><button style="background:#e65100;color:#fff;" onclick="editClient(\''+k+'\')">✏️ Modifica</button><button class="btn-delete" onclick="deleteClient(\''+k+'\')">Elimina</button></div></div>';}).join('');
 }
 function filterClients(){renderClientsList(G('clientSearch').value)}
 
