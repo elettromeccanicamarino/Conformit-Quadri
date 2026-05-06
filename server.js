@@ -227,5 +227,6 @@ app.post('/api/import', requireAuth, async (req, res) => {
   } catch(e) { res.status(500).json({error:e.message}); }
 });
 
+app.get('/app', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(PORT, '0.0.0.0', () => console.log(`Marino App avviata sulla porta ${PORT}`));
