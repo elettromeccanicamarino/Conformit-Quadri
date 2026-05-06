@@ -648,12 +648,15 @@ function notify(msg,type){
 }
 
 /* ===== LOGIN ===== */
+function getDemoPfx(){var p=localStorage.getItem('demoPfx');if(!p||!/^demo_[a-z0-9]{6,16}_$/.test(p)){p='demo_'+Math.random().toString(36).slice(2,10)+'_';localStorage.setItem('demoPfx',p);}return p;}
 function doLogin(){
   var pwd=G('loginPwd').value;
-  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})})
+  var body={password:pwd};
+  if(pwd===undefined||pwd.length>0)body.pfx=getDemoPfx();
+  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
     .then(function(r){return r.json()})
     .then(function(data){
-      if(data.ok){G('loginScreen').classList.remove('show');initApp();}
+      if(data.ok){if(data.pfx)localStorage.setItem('demoPfx',data.pfx);G('loginScreen').classList.remove('show');initApp();}
       else{G('loginError').textContent='Password errata';G('loginPwd').value='';}
     }).catch(function(){G('loginError').textContent='Errore di connessione';});
 }
@@ -853,9 +856,7 @@ function resetConfig(){
 
 document.addEventListener('DOMContentLoaded',function(){
   if(new URLSearchParams(window.location.search).has('demo')){
-    fetch('/api/demo-login',{method:'POST',credentials:'same-origin'}).then(function(){
-      window.location.href='/';
-    });
+    fetch('/api/demo-login',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({pfx:getDemoPfx()})}).then(function(r){return r.json();}).then(function(data){if(data.pfx)localStorage.setItem('demoPfx',data.pfx);window.location.href='/';});
     return;
   }
   if(_setupToken){

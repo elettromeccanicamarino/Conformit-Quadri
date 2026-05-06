@@ -49,8 +49,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // — DEMO LOGIN (via API, non intercettato da static) —
 app.post('/api/demo-login', (req, res) => {
   const cookieOpts = { signed: true, httpOnly: true, maxAge: 2*60*60*1000, sameSite: 'lax' };
-  res.cookie('auth', 'demo|demo_', cookieOpts);
-  res.json({ ok: true });
+  const raw = req.body && req.body.pfx;
+  const pfx = (raw && /^demo_[a-z0-9]{6,16}_$/.test(raw)) ? raw : ('demo_' + Math.random().toString(36).slice(2,10) + '_');
+  res.cookie('auth', 'demo|' + pfx, cookieOpts);
+  res.json({ ok: true, pfx });
 });
 
 // Cookie format: "type|prefix"
@@ -78,8 +80,10 @@ app.post('/api/login', async (req, res) => {
     return res.json({ ok: true });
   }
   if (pwd === DEMO_PASSWORD) {
-    res.cookie('auth', 'demo|demo_', cookieOpts);
-    return res.json({ ok: true });
+    const raw = req.body && req.body.pfx;
+    const pfx = (raw && /^demo_[a-z0-9]{6,16}_$/.test(raw)) ? raw : ('demo_' + Math.random().toString(36).slice(2,10) + '_');
+    res.cookie('auth', 'demo|' + pfx, cookieOpts);
+    return res.json({ ok: true, pfx });
   }
   // Cerca negli account clienti
   try {
