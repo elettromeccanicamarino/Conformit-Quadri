@@ -44,6 +44,14 @@ async function deleteOne(collection, key) {
 app.use(express.json({ limit: '25mb' }));
 app.use(cookieParser(SECRET));
 
+app.get('/', (req, res) => {
+  const auth = req.signedCookies && req.signedCookies.auth;
+  if (auth) {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+  res.sendFile(path.join(__dirname, 'public', 'landing.html'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // — DEMO LOGIN (via API, non intercettato da static) —
@@ -217,14 +225,6 @@ app.post('/api/import', requireAuth, async (req, res) => {
     if (em_clients)  for (const [k,v] of Object.entries(em_clients))  await writeOne(p+'clients', k, v);
     res.json({ ok: true });
   } catch(e) { res.status(500).json({error:e.message}); }
-});
-
-app.get('/', (req, res) => {
-  const auth = req.signedCookies && req.signedCookies.auth;
-  if (auth) {
-    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  }
-  res.sendFile(path.join(__dirname, 'public', 'landing.html'));
 });
 
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
